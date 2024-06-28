@@ -150,6 +150,10 @@ PV_API pv_speaker_status_t pv_speaker_init(
                 return PV_SPEAKER_STATUS_RUNTIME_ERROR;
             }
         }
+        if (count == 0) {
+            pv_speaker_delete(o);
+            return PV_SPEAKER_STATUS_RUNTIME_ERROR;
+        }
         if (device_index >= count) {
             pv_speaker_delete(o);
             return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
