@@ -47,7 +47,7 @@ jobs:
     runs-on: ${{ matrix.machine }}
     strategy:
       matrix:
-        machine: [rpi3-32, rpi3-64, rpi4-32, rpi4-64, rpi5-64]
+        machine: [rpi3-32, rpi3-64, rpi4-32, rpi4-64, rpi5-32, rpi5-64]
         include:
           - machine: rpi3-32
             pv_speaker_platform: raspberry-pi3
@@ -61,6 +61,9 @@ jobs:
           - machine: rpi4-64
             pv_speaker_platform: raspberry-pi4-64
             output_dir: raspberry-pi/cortex-a72-aarch64
+          - machine: rpi5-32
+            pv_speaker_platform: raspberry-pi5
+            output_dir: raspberry-pi/cortex-a76
           - machine: rpi5-64
             pv_speaker_platform: raspberry-pi5-64
             output_dir: raspberry-pi/cortex-a76-aarch64
