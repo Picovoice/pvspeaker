@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.4)
 project(pv_speaker VERSION 1.0.0 DESCRIPTION "Picovoice audio player library.")
 
 set(CMAKE_C_STANDARD 99)
-#set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
 

@@ -35,11 +35,9 @@ to get a list of possible values.
 ```c
 #include "pv_speaker.h"
 
-uint32_t num_samples, sample_rate;
-uint16_t bits_per_sample;
-void *pcm = read_wav_file(input_wav_path, &num_samples, &sample_rate, &bits_per_sample);
-    
+const int32_t sample_rate = 22050;
 const int32_t frame_length = 512;
+const int16_t bits_per_sample = 16;
 const int32_t device_index = -1; // -1 == default device
 const int32_t buffered_frame_count = 10;
 
@@ -49,7 +47,7 @@ pv_speaker_status_t status = pv_speaker_init(
         frame_length,
         bits_per_sample,
         device_index,
-        10,
+        buffered_frame_count,
         &speaker);
 if (status != PV_SPEAKER_STATUS_SUCCESS) {
     // handle PvSpeaker init error
@@ -67,10 +65,7 @@ if (status != PV_SPEAKER_STATUS_SUCCESS) {
 
 3. Read frames of audio from the speaker:
 ```c
-// pcm from read_wav_file function
 if (pcm) {
-    // cast as char *
-    char *pcmData = (char *) pcm;
     for (int i = 0; i < num_samples; i += frame_length) {
         // must have length equal to or less than `frame_length` that was given to `pv_speaker_init()`
         // be sure to handle the last frame properly (i.e. the last frame will likely not have length `frame_length`)
@@ -80,7 +75,7 @@ if (pcm) {
         status = pv_speaker_write(
                 speaker,
                 is_last_frame ? last_frame_length : frame_length,
-                &pcmData[i * bits_per_sample / 8]);
+                &pcm[i * bits_per_sample / 8]);
         if (status != PV_SPEAKER_STATUS_SUCCESS) {
             // handle PvSpeaker write error
         }

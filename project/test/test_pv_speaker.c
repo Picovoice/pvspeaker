@@ -88,6 +88,7 @@ static void test_pv_speaker_start_stop(void) {
     pv_speaker_status_t status;
     int32_t frame_length = 512;
     int16_t frame[frame_length];
+    char *frame_ptr = (char *) frame;
 
     status = pv_speaker_init(16000, frame_length, 16, 0, 10, &speaker);
     check_condition(
@@ -125,7 +126,7 @@ static void test_pv_speaker_start_stop(void) {
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT));
 
     printf("Call read before start object\n");
-    status = pv_speaker_write(speaker, frame_length, frame);
+    status = pv_speaker_write(speaker, frame_length, frame_ptr);
     check_condition(
             status == PV_SPEAKER_STATUS_INVALID_STATE,
             __FUNCTION__,
@@ -145,7 +146,7 @@ static void test_pv_speaker_start_stop(void) {
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
 
     printf("Call write on null speaker\n");
-    status = pv_speaker_write(NULL, frame_length, frame);
+    status = pv_speaker_write(NULL, frame_length, frame_ptr);
     check_condition(
             status == PV_SPEAKER_STATUS_INVALID_ARGUMENT,
             __FUNCTION__,
@@ -165,7 +166,7 @@ static void test_pv_speaker_start_stop(void) {
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT));
 
     printf("Call write with valid args\n");
-    status = pv_speaker_write(speaker, frame_length, frame);
+    status = pv_speaker_write(speaker, frame_length, frame_ptr);
     check_condition(
             status == PV_SPEAKER_STATUS_SUCCESS,
             __FUNCTION__,
