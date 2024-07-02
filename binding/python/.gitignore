@@ -1,0 +1,7 @@
+venv
+dist
+MANIFEST.in
+pvspeaker
+pvspeaker.egg-info
+build
+__pycache__
