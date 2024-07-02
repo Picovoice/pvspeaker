@@ -54,7 +54,7 @@ typedef enum {
 * @param frame_length The maximum length of audio frame that will be passed to `pv_speaker_write`.
 * @param bits_per_sample The number of bits per sample.
 * @param device_index The index of the audio device to use. A value of (-1) will resort to default device.
-* @param buffered_frames_count The number of audio frames buffered internally for reading - i.e. internal circular buffer
+* @param buffered_frames_count The number of audio frames buffered internally for writing - i.e. internal circular buffer
 * will be of size `frame_length` * `buffered_frames_count`. If this value is too low, buffer overflows could occur
 * and audio frames could be dropped. A higher value will increase memory usage.
 * @param[out] object PvSpeaker object to be initialized.
@@ -102,7 +102,7 @@ PV_API pv_speaker_status_t pv_speaker_stop(pv_speaker_t *object);
 * @param frame_length Size of the array that is passed in.
 * @param frame[out] An array for the frame to be copied to.
 * @return Status Code. Returns PV_SPEAKER_STATUS_INVALID_ARGUMENT, PV_SPEAKER_INVALID_STATE or PV_SPEAKER_IO_ERROR on failure.
-* Returns PV_SPEAKER_STATUS_BUFFER_OVERFLOW if audio frames aren't being read fast enough. This means audio frames will be dropped.
+* Returns PV_SPEAKER_STATUS_BUFFER_OVERFLOW if audio frames aren't being written fast enough. This means audio frames will be dropped.
 */
 PV_API pv_speaker_status_t pv_speaker_write(pv_speaker_t *object, int32_t frame_length, void *frame);
 

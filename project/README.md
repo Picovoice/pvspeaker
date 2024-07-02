@@ -63,7 +63,7 @@ if (status != PV_SPEAKER_STATUS_SUCCESS) {
 }
 ```
 
-3. Read frames of audio from the speaker:
+3. Write frames of audio to the speaker:
 ```c
 if (pcm) {
     for (int i = 0; i < num_samples; i += frame_length) {

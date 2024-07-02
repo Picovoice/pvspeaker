@@ -10,7 +10,6 @@ on:
       - 'project/**'
       - '!project/README.md'
       - '.github/workflows/c.yml'
-      - '.github/actions/c-template/action.yml'
   pull_request:
     branches: [ main, 'v[0-9]+.[0-9]+' ]
     paths:
@@ -19,7 +18,6 @@ on:
       - 'project/**'
       - '!project/README.md'
       - '.github/workflows/c.yml'
-      - '.github/actions/c-template/action.yml'
 
 jobs:
   build-github-hosted:
@@ -37,11 +35,25 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: ./.github/actions/c-template
-        name: Build and test
+      - name: Create build directory
+        run: cmake -B ./build -S . -DPV_SPEAKER_PLATFORM="${{ matrix.pv_speaker_platform }}" -DOUTPUT_DIR="${{ matrix.output_dir }}"
+        working-directory: project
+
+      - name: Build
+        run: cmake --build ./build
+        working-directory: project
+
+      - name: Test
+        run: ctest --output-on-failure
+        working-directory: project/build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
         with:
-          pv_speaker_platform: ${{ matrix.pv_speaker_platform }}
-          output_dir: ${{ matrix.output_dir }}
+          name: ${{ matrix.pv_speaker_platform }}
+          path: |
+            lib/${{ matrix.output_dir }}/libpv_speaker.*
+          retention-days: 3
 
   build-self-hosted:
     runs-on: ${{ matrix.machine }}
@@ -73,11 +85,25 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: ./.github/actions/c-template
-        name: Build and test
+      - name: Create build directory
+        run: cmake -B ./build -S . -DPV_SPEAKER_PLATFORM="${{ matrix.pv_speaker_platform }}" -DOUTPUT_DIR="${{ matrix.output_dir }}"
+        working-directory: project
+
+      - name: Build
+        run: cmake --build ./build
+        working-directory: project
+
+      - name: Test
+        run: ctest --output-on-failure
+        working-directory: project/build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
         with:
-          pv_speaker_platform: ${{ matrix.pv_speaker_platform }}
-          output_dir: ${{ matrix.output_dir }}
+          name: ${{ matrix.pv_speaker_platform }}
+          path: |
+            lib/${{ matrix.output_dir }}/libpv_speaker.*
+          retention-days: 3
 
   build-mac:
     runs-on: pv-ios
@@ -94,25 +120,60 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: ./.github/actions/c-template
-        name: Build and test
+      - name: Create build directory
+        run: cmake -B ./build -S . -DPV_SPEAKER_PLATFORM="${{ matrix.pv_speaker_platform }}" -DOUTPUT_DIR="${{ matrix.output_dir }}"
+        working-directory: project
+
+      - name: Build
+        run: cmake --build ./build
+        working-directory: project
+
+      - name: Test
+        run: ctest --output-on-failure
+        working-directory: project/build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
         with:
-          pv_speaker_platform: ${{ matrix.pv_speaker_platform }}
-          output_dir: ${{ matrix.output_dir }}
+          name: ${{ matrix.pv_speaker_platform }}
+          path: |
+            lib/${{ matrix.output_dir }}/libpv_speaker.*
+          retention-days: 3
 
   build-windows:
     runs-on: pv-windows
+    strategy:
+      matrix:
+        pv_speaker_platform: windows
+        output_dir: windows/amd64
+        shell: pwsh
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
 
-      - uses: ./.github/actions/c-template
-        name: Build and test
+      - name: Create build directory
+        run: cmake -B ./build -S . -DPV_SPEAKER_PLATFORM="${{ matrix.pv_speaker_platform }}" -DOUTPUT_DIR="${{ matrix.output_dir }}"
+        working-directory: project
+        shell: ${{ matrix.shell }}
+
+      - name: Build
+        run: cmake --build ./build
+        working-directory: project
+        shell: ${{ matrix.shell }}
+
+      - name: Test
+        run: ctest --output-on-failure
+        working-directory: project/build
+        shell: ${{ matrix.shell }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
         with:
-          pv_speaker_platform: windows
-          output_dir: windows/amd64
-          shell: pwsh
+          name: ${{ matrix.pv_speaker_platform }}
+          path: |
+            lib/${{ matrix.output_dir }}/libpv_speaker.*
+          retention-days: 3
 
   collect-artifacts:
     runs-on: ubuntu-latest
