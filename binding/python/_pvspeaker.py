@@ -175,7 +175,6 @@ class PvSpeaker(object):
         """Synchronous call to write a frame of audio."""
 
         status = self._write_func(self._handle, c_int32(len(frame)), c_char_p(id(frame)))
-        print(status)
         if status is not self.PvSpeakerStatuses.SUCCESS:
             if len(frame) > self.frame_length:
                 raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to write to device. Frame length must not be "
