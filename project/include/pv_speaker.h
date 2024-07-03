@@ -100,7 +100,7 @@ PV_API pv_speaker_status_t pv_speaker_stop(pv_speaker_t *object);
 *
 * @param object PvSpeaker object.
 * @param frame_length Size of the array that is passed in.
-* @param frame[out] An array for the frame to be copied to.
+* @param frame Pointer to the array that will be written.
 * @return Status Code. Returns PV_SPEAKER_STATUS_INVALID_ARGUMENT, PV_SPEAKER_INVALID_STATE or PV_SPEAKER_IO_ERROR on failure.
 * Returns PV_SPEAKER_STATUS_BUFFER_OVERFLOW if audio frames aren't being written fast enough. This means audio frames will be dropped.
 */
