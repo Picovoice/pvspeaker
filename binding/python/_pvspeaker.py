@@ -12,8 +12,10 @@
 import os
 import platform
 import subprocess
+
 from ctypes import *
 from enum import Enum
+from struct import pack
 from typing import *
 
 CALLBACK = CFUNCTYPE(None, POINTER(c_int16))
@@ -81,9 +83,9 @@ class PvSpeaker(object):
     def __init__(
             self,
             sample_rate: int,
-            frame_length: int,
             bits_per_sample: int,
             device_index: int = -1,
+            frame_length: int = 512,
             buffered_frames_count: int = 50):
         """
         Constructor
@@ -137,7 +139,7 @@ class PvSpeaker(object):
         self._set_debug_logging_func.restype = None
 
         self._write_func = library.pv_speaker_write
-        self._write_func.argtypes = [POINTER(self.CPvSpeaker), c_int32, c_char_p]
+        self._write_func.argtypes = [POINTER(self.CPvSpeaker), c_int32, c_void_p]
         self._write_func.restype = self.PvSpeakerStatuses
 
         self._get_is_playing_func = library.pv_speaker_get_is_playing
@@ -171,18 +173,36 @@ class PvSpeaker(object):
         if status is not self.PvSpeakerStatuses.SUCCESS:
             raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to stop device.")
 
-    def write(self, frame) -> True:
-        """Synchronous call to write a frame of audio."""
+    def write(self, pcm) -> True:
+        """Synchronous call to write a frame of pcm audio."""
 
-        status = self._write_func(self._handle, c_int32(len(frame)), c_char_p(id(frame)))
-        if status is not self.PvSpeakerStatuses.SUCCESS:
-            if len(frame) > self.frame_length:
-                raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to write to device. Frame length must not be "
-                                                                  "greater than `frame_length` given to `__init__()`")
-            else:
+        i = 0
+        while i < len(pcm):
+            is_last_frame = i + self._frame_length >= len(pcm)
+            last_frame_length = len(pcm) - i
+            write_frame_length = last_frame_length if is_last_frame else self._frame_length
+
+            start_index = i
+            end_index = i + write_frame_length
+            frame = pcm[start_index:end_index]
+
+            byte_data = None
+            if self._bits_per_sample == 8:
+                byte_data = pack('b' * len(frame), *frame)
+            elif self._bits_per_sample == 16:
+                byte_data = pack('h' * len(frame), *frame)
+            elif self._bits_per_sample == 24:
+                byte_data = b''.join(pack('<i', sample)[0:3] for sample in frame)
+            elif self._bits_per_sample == 32:
+                byte_data = pack('i' * len(frame), *frame)
+
+            status = self._write_func(self._handle, c_int32(len(frame)), c_char_p(byte_data))
+            if status is not self.PvSpeakerStatuses.SUCCESS:
                 raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to write to device.")
-        else:
-            return True
+
+            i += self._frame_length
+
+        return True
 
     def set_debug_logging(self, is_debug_logging_enabled: bool) -> None:
         """

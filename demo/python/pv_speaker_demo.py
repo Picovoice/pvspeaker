@@ -11,6 +11,10 @@
 
 
 import argparse
+import wave
+import array
+import sys
+sys.path.append("../../binding/python/")
 
 from pvspeaker import PvSpeaker
 
@@ -31,7 +35,7 @@ def main():
 
     parser.add_argument(
         "--input_wav_path",
-        help="Path to file from which to read raw audio.",
+        help="Path to PCM WAV file to be played.",
         default=None)
 
     args = parser.parse_args()
@@ -44,9 +48,62 @@ def main():
         device_index = args.audio_device_index
         input_path = args.input_wav_path
 
-        recorder = PvSpeaker(sample_rate=16000, frame_length=512, bits_per_sample=16, device_index=device_index)
-        print("pvspeaker version: %s" % recorder.version)
+        wavfile = None
+        speaker = None
 
+        try:
+            if input_path is not None:
+                wavfile = wave.open(input_path, "rb")
+
+                sample_rate = wavfile.getframerate()
+                bits_per_sample = wavfile.getsampwidth() * 8
+                num_channels = wavfile.getnchannels()
+                num_samples = wavfile.getnframes()
+
+                if num_channels != 1:
+                    print("WAV file must have a single channel (MONO)")
+                    wavfile.close()
+                    exit()
+
+                speaker = PvSpeaker(
+                    sample_rate=sample_rate,
+                    bits_per_sample=bits_per_sample,
+                    device_index=device_index)
+                print("pvspeaker version: %s" % speaker.version)
+
+                speaker.start()
+                print("Using device: %s" % speaker.selected_device)
+
+                wav_bytes = wavfile.readframes(num_samples)
+
+                pcm = None
+                if bits_per_sample == 8:
+                    pcm = list(array.array('b', wav_bytes))
+                elif bits_per_sample == 16:
+                    pcm = list(array.array('h', wav_bytes))
+                elif bits_per_sample == 24:
+                    pcm = []
+                    for i in range(0, len(wav_bytes), 3):
+                        byte_chunk = wav_bytes[i:i + 3]
+                        value = byte_chunk[0] | (byte_chunk[1] << 8) | (byte_chunk[2] << 16)
+                        pcm.append(value)
+                elif bits_per_sample == 32:
+                    pcm = list(array.array('i', wav_bytes))
+
+                print("Playing audio...")
+                speaker.write(pcm)
+                speaker.stop()
+
+                print("Finished playing audio...")
+                wavfile.close()
+
+        except KeyboardInterrupt:
+            print("Stopping...")
+        finally:
+            if speaker is not None:
+                speaker.delete()
+            if wavfile is not None:
+                wavfile.close()
 
 if __name__ == "__main__":
     main()
