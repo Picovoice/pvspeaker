@@ -22,7 +22,10 @@ Initialize and begin playing audio:
 ```python
 from pvspeaker import PvSpeaker
 
-speaker = PvSpeaker(frame_length=512)
+speaker = PvSpeaker(
+    sample_rate=22050,
+    bits_per_sample=16,
+    device_index=0)
 speaker.start()
 ```
 

@@ -60,6 +60,11 @@ def main():
                 num_channels = wavfile.getnchannels()
                 num_samples = wavfile.getnframes()
 
+                if bits_per_sample != 8 and bits_per_sample != 16 and bits_per_sample != 24 and bits_per_sample != 32:
+                    print(f"Unsupported bits per sample: {bits_per_sample}")
+                    wavfile.close()
+                    exit()
+
                 if num_channels != 1:
                     print("WAV file must have a single channel (MONO)")
                     wavfile.close()
@@ -70,25 +75,24 @@ def main():
                     bits_per_sample=bits_per_sample,
                     device_index=device_index)
                 print("pvspeaker version: %s" % speaker.version)
-
-                speaker.start()
                 print("Using device: %s" % speaker.selected_device)
 
                 wav_bytes = wavfile.readframes(num_samples)
 
                 pcm = None
                 if bits_per_sample == 8:
-                    pcm = list(array.array('b', wav_bytes))
+                    pcm = list(array.array('B', wav_bytes))
                 elif bits_per_sample == 16:
                     pcm = list(array.array('h', wav_bytes))
                 elif bits_per_sample == 24:
                     pcm = []
                     for i in range(0, len(wav_bytes), 3):
-                        byte_chunk = wav_bytes[i:i + 3]
-                        value = byte_chunk[0] | (byte_chunk[1] << 8) | (byte_chunk[2] << 16)
-                        pcm.append(value)
+                        sample = int.from_bytes(wav_bytes[i:i + 3], byteorder='little', signed=True)
+                        pcm.append(sample)
                 elif bits_per_sample == 32:
                     pcm = list(array.array('i', wav_bytes))
+
+                speaker.start()
 
                 print("Playing audio...")
                 speaker.write(pcm)

@@ -91,9 +91,9 @@ class PvSpeaker(object):
         Constructor
 
         :param sample_rate: The sample rate of the audio to be played.
-        :param frame_length: The maximum length of audio frame that will be passed to each write call.
         :param bits_per_sample: The number of bits per sample.
         :param device_index: The index of the audio device to use. A value of (-1) will resort to default device.
+        :param frame_length: The maximum length of audio frame that will be passed to each write call.
         :param buffered_frames_count: The number of audio frames buffered internally for writing - i.e. internal
         circular buffer will be of size `frame_length` * `buffered_frames_count`. If this value is too low,
         buffer overflows could occur audio frames could be dropped. A higher value will increase memory usage.
@@ -174,7 +174,7 @@ class PvSpeaker(object):
             raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to stop device.")
 
     def write(self, pcm) -> True:
-        """Synchronous call to write a frame of pcm audio."""
+        """Synchronous call to write pcm frames."""
 
         i = 0
         while i < len(pcm):
@@ -188,7 +188,7 @@ class PvSpeaker(object):
 
             byte_data = None
             if self._bits_per_sample == 8:
-                byte_data = pack('b' * len(frame), *frame)
+                byte_data = pack('B' * len(frame), *frame)
             elif self._bits_per_sample == 16:
                 byte_data = pack('h' * len(frame), *frame)
             elif self._bits_per_sample == 24:
