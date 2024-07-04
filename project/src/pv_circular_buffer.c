@@ -65,7 +65,7 @@ void pv_circular_buffer_delete(pv_circular_buffer_t *object) {
     }
 }
 
-pv_circular_buffer_status_t pv_circular_buffer_read(
+int32_t pv_circular_buffer_read(
         pv_circular_buffer_t *object,
         void *buffer,
         int32_t buffer_length) {
@@ -105,7 +105,7 @@ pv_circular_buffer_status_t pv_circular_buffer_read(
 
     object->count -= max_copy;
 
-    return PV_CIRCULAR_BUFFER_STATUS_SUCCESS;
+    return max_copy;
 }
 
 pv_circular_buffer_status_t pv_circular_buffer_write(

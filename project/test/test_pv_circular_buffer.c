@@ -34,8 +34,8 @@ static void test_pv_circular_buffer_once(void) {
     int32_t count = pv_circular_buffer_get_count(cb);
     check_condition(count == in_size, __FUNCTION__, __LINE__, "Failed to get correct count after write.");
 
-    status = pv_circular_buffer_read(cb, out_buffer, out_size);
-    check_condition(status == PV_CIRCULAR_BUFFER_STATUS_SUCCESS, __FUNCTION__, __LINE__, "Failed to read buffer.");
+    int32_t length = pv_circular_buffer_read(cb, out_buffer, out_size);
+    check_condition(length <= out_size, __FUNCTION__, __LINE__, "Failed to read buffer.");
 
     count = pv_circular_buffer_get_count(cb);
     check_condition(count == in_size - out_size, __FUNCTION__, __LINE__, "Failed to get correct count after read.");
@@ -172,9 +172,9 @@ static void test_pv_circular_buffer_read_write_one_by_one(void) {
                 __LINE__,
                 "Failed to write to buffer.");
 
-        status = pv_circular_buffer_read(cb, out_buffer + i, 1);
+        int32_t length = pv_circular_buffer_read(cb, out_buffer + i, 1);
         check_condition(
-                status == PV_CIRCULAR_BUFFER_STATUS_SUCCESS,
+                length == 1,
                 __FUNCTION__,
                 __LINE__,
                 "Failed to read buffer.");
