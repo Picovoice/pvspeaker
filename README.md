@@ -1,5 +1,9 @@
 # PvSpeaker
 
+<!-- markdown-link-check-disable -->
+[![PyPI](https://img.shields.io/pypi/v/pvspeaker)](https://pypi.org/project/pvspeaker/)
+<!-- markdown-link-check-enable -->
+
 Made in Vancouver, Canada by [Picovoice](https://picovoice.ai)
 
 <!-- markdown-link-check-disable -->
@@ -14,7 +18,10 @@ PvSpeaker is an easy-to-use, cross-platform audio player designed for real-time 
     - [Table of Contents](#table-of-contents)
     - [Source Code](#source-code)
     - [Demos](#demos)
-        - [C](#c-demo)
+      - [Python](#python-demo)
+      - [C](#c-demo)
+    - [SDKs](#sdks)
+      - [Python](#python) 
 
 ## Source Code
 
@@ -34,6 +41,30 @@ If using HTTPS, clone the repository with:
 ```console
 git clone --recurse-submodules https://github.com/Picovoice/pvspeaker.git
 ```
+
+### Python Demo
+
+Install the demo package:
+
+```console
+pip3 install pvspeakerdemo
+```
+
+To show the available audio devices run:
+
+```console
+pv_speaker_demo --show_audio_devices
+```
+
+With a working speaker connected to your device run the following in the terminal:
+
+```console
+pv_speaker_demo --input_wav_path {INPUT_WAV_PATH}
+```
+
+Replace `{INPUT_WAV_PATH}` with the path to the pcm `wav` file you wish to play.
+
+For more information about the Python demos go to [demo/python](demo/python).
 
 ### C Demo
 
@@ -61,3 +92,40 @@ Play from a single-channel PCM WAV file with a given audio device index:
 Hit `Ctrl+C` if you wish to stop audio playback before it completes. If no audio device index (`-d`) is provided, the demo will use the system's default audio player device.
 
 For more information about the C demo, go to [demo/c](demo/c).
+
+## SDKs
+
+### Python
+
+To start playing audio, initialize an instance and run `start()`:
+
+```python
+from pvspeaker import PvSpeaker
+
+speaker = PvSpeaker(
+    sample_rate=22050,
+    bits_per_sample=16,
+    device_index=0)
+speaker.start()
+```
+
+Write frames of audio:
+
+```python
+frame = [0] * 512
+speaker.write(frame)
+```
+
+When all frames have been written, run `stop()` on the instance:
+
+```python
+speaker.stop()
+```
+
+Once you are done, free the resources acquired by PvSpeaker. You do not have to call `stop()` before `delete()`:
+
+```python
+speaker.delete()
+```
+
+For more information about the PvSpeaker Python SDK, go to [binding/python](binding/python).
