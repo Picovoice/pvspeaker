@@ -57,12 +57,14 @@ void pv_circular_buffer_delete(pv_circular_buffer_t *object);
 * @param object Circular buffer object.
 * @param buffer[out] A pointer to copy the elements into.
 * @param buffer_length The amount to copy to read from the buffer.
-* @return Returns the total length of frames copied to buffer.
+* @param read_length[out] The total length of frames copied to buffer.
+* @return Status Code. Returns PV_CIRCULAR_BUFFER_STATUS_INVALID_ARGUMENT on failure.
 */
-int32_t pv_circular_buffer_read(
+pv_circular_buffer_status_t pv_circular_buffer_read(
         pv_circular_buffer_t *object,
         void *buffer,
-        int32_t buffer_length);
+        int32_t buffer_length,
+        int32_t *read_length);
 
 /**
 * Writes and copies the elements of `buffer` to the object's buffer. Does not write frames if the buffer
@@ -82,9 +84,10 @@ pv_circular_buffer_status_t pv_circular_buffer_write(
 * Gets the current size of the object's buffer.
 *
 * @param object Circular buffer object.
-* @return Returns the current size of the buffer.
+* @param count[out] The current size of the buffer.
+* @return Status Code. Returns PV_CIRCULAR_BUFFER_STATUS_INVALID_ARGUMENT on failure.
 */
-int32_t pv_circular_buffer_get_count(pv_circular_buffer_t *object);
+pv_circular_buffer_status_t pv_circular_buffer_get_count(pv_circular_buffer_t *object, int32_t *count);
 
 /**
 * Reset the buffer pointers to start.

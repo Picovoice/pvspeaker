@@ -210,13 +210,14 @@ int main(int argc, char *argv[]) {
         free(pcm);
     }
 
-    if (!is_interrupted) {
-        fprintf(stdout, "Finished playing audio...\n");
-    }
     status = pv_speaker_stop(speaker);
     if (status != PV_SPEAKER_STATUS_SUCCESS) {
         fprintf(stderr, "Failed to stop device with %s.\n", pv_speaker_status_to_string(status));
         exit(1);
+    }
+
+    if (!is_interrupted) {
+        fprintf(stdout, "Finished playing audio...\n");
     }
 
     fprintf(stdout, "Deleting pv_speaker...\n");

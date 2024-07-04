@@ -65,10 +65,11 @@ void pv_circular_buffer_delete(pv_circular_buffer_t *object) {
     }
 }
 
-int32_t pv_circular_buffer_read(
+pv_circular_buffer_status_t pv_circular_buffer_read(
         pv_circular_buffer_t *object,
         void *buffer,
-        int32_t buffer_length) {
+        int32_t buffer_length,
+        int32_t *read_length) {
     if (!object) {
         return PV_CIRCULAR_BUFFER_STATUS_INVALID_ARGUMENT;
     }
@@ -105,7 +106,9 @@ int32_t pv_circular_buffer_read(
 
     object->count -= max_copy;
 
-    return max_copy;
+    *read_length = max_copy;
+
+    return PV_CIRCULAR_BUFFER_STATUS_SUCCESS;
 }
 
 pv_circular_buffer_status_t pv_circular_buffer_write(
@@ -150,12 +153,14 @@ pv_circular_buffer_status_t pv_circular_buffer_write(
     return PV_CIRCULAR_BUFFER_STATUS_SUCCESS;
 }
 
-int32_t pv_circular_buffer_get_count(pv_circular_buffer_t *object) {
+pv_circular_buffer_status_t pv_circular_buffer_get_count(pv_circular_buffer_t *object, int32_t *count) {
     if (!object) {
         return PV_CIRCULAR_BUFFER_STATUS_INVALID_ARGUMENT;
     }
 
-    return object->count;
+    *count = object->count;
+
+    return PV_CIRCULAR_BUFFER_STATUS_SUCCESS;
 }
 
 void pv_circular_buffer_reset(pv_circular_buffer_t *object) {
