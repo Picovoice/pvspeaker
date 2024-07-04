@@ -29,7 +29,7 @@
 static const int32_t WRITE_RETRY_COUNT = 500;
 static const int32_t WRITE_SLEEP_MILLI_SECONDS = 2;
 
-static bool is_empty = false;
+static bool is_stopped_and_empty = false;
 static bool is_data_requested_while_empty = false;
 
 struct pv_speaker {
@@ -48,16 +48,17 @@ static void pv_speaker_ma_callback(ma_device *device, void *output, const void *
     pv_speaker_t *object = (pv_speaker_t *) device->pUserData;
 
     ma_mutex_lock(&object->mutex);
-    int32_t read_length = 0;
-    pv_circular_buffer_read(object->buffer, output, (int32_t) frame_count, &read_length);
-    if (object->is_debug_logging_enabled) {
-        fprintf(stdout, "[INFO] Number of frames copied to output buffer: %d.\n", read_length);
-    }
+
     // this callback being invoked after calling `pv_speaker_stop` and the circular buffer is empty indicates that all
     // frames have been passed to the output buffer, and the device can stop without truncating the last frame of audio
-    if (is_empty) {
+    if (is_stopped_and_empty) {
         is_data_requested_while_empty = true;
+        ma_mutex_unlock(&object->mutex);
+        return;
     }
+
+    int32_t read_length = 0;
+    pv_circular_buffer_read(object->buffer, output, (int32_t) frame_count, &read_length);
 
     ma_mutex_unlock(&object->mutex);
 }
@@ -220,7 +221,7 @@ PV_API pv_speaker_status_t pv_speaker_start(pv_speaker_t *object) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
 
-    is_empty = false;
+    is_stopped_and_empty = false;
     is_data_requested_while_empty = false;
 
     ma_result result = ma_device_start(&(object->device));
@@ -244,12 +245,12 @@ PV_API pv_speaker_status_t pv_speaker_stop(pv_speaker_t *object) {
     }
 
     // waits for all frames to be copied to output buffer before stopping
-    while (!is_empty || !is_data_requested_while_empty) {
+    while (!is_stopped_and_empty || !is_data_requested_while_empty) {
         ma_mutex_lock(&object->mutex);
         int32_t count = 0;
         pv_circular_buffer_status_t status = pv_circular_buffer_get_count(object->buffer, &count);
         if (status == PV_CIRCULAR_BUFFER_STATUS_SUCCESS && count == 0) {
-            is_empty = true;
+            is_stopped_and_empty = true;
         } else if (status != PV_CIRCULAR_BUFFER_STATUS_SUCCESS) {
             ma_mutex_unlock(&object->mutex);
             return PV_SPEAKER_STATUS_RUNTIME_ERROR;

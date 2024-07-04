@@ -16,7 +16,7 @@
 #include <stdint.h>
 
 /**
-* Forward declaration of pv_circular_buffer object. It handles reading and writing to a buffer.
+* Forward declaration of pv_circular_buffer object. It handles reading and writing to a circular buffer.
 */
 typedef struct pv_circular_buffer pv_circular_buffer_t;
 
@@ -55,9 +55,9 @@ void pv_circular_buffer_delete(pv_circular_buffer_t *object);
 * Reads and copies the elements to the provided buffer.
 *
 * @param object Circular buffer object.
-* @param buffer[out] A pointer to copy the elements into.
-* @param buffer_length The amount to copy to read from the buffer.
-* @param read_length[out] The total length of frames copied to buffer.
+* @param buffer[out] A pointer to a pre-allocated buffer to receive the copied data.
+* @param buffer_length The maximum number of elements that can be copied into `buffer`.
+* @param read_length[out] Actual number of elements read.
 * @return Status Code. Returns PV_CIRCULAR_BUFFER_STATUS_INVALID_ARGUMENT on failure.
 */
 pv_circular_buffer_status_t pv_circular_buffer_read(

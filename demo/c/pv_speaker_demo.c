@@ -191,11 +191,10 @@ int main(int argc, char *argv[]) {
         char *pcmData = (char *) pcm;
         for (int i = 0; i < num_samples; i += frame_length) {
             bool is_last_frame = i + frame_length >= num_samples;
-            int32_t last_frame_length = num_samples - i;
 
             status = pv_speaker_write(
                     speaker,
-                    is_last_frame ? last_frame_length : frame_length,
+                    is_last_frame ? num_samples - i : frame_length,
                     &pcmData[i * bits_per_sample / 8]);
             if (status != PV_SPEAKER_STATUS_SUCCESS) {
                 fprintf(stderr, "Failed to write with %s.\n", pv_speaker_status_to_string(status));
