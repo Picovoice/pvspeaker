@@ -83,7 +83,7 @@ pv_circular_buffer_status_t pv_circular_buffer_read(
     }
 
     void *dst_ptr = buffer;
-    const void *src_ptr = (char *) object->buffer + (object->read_index * object->element_size);
+    const void *src_ptr = (int8_t *) object->buffer + (object->read_index * object->element_size);
 
     const int32_t available = object->capacity - object->read_index;
     const int32_t max_copy = (object->count < buffer_length) ? object->count : buffer_length;
@@ -95,7 +95,7 @@ pv_circular_buffer_status_t pv_circular_buffer_read(
 
     const int32_t remaining = max_copy - to_copy;
     if (remaining > 0) {
-        dst_ptr = (char *) buffer + (to_copy * object->element_size);
+        dst_ptr = (int8_t *) buffer + (to_copy * object->element_size);
         src_ptr = object->buffer;
 
         memcpy(dst_ptr, src_ptr, remaining * object->element_size);
@@ -121,21 +121,31 @@ pv_circular_buffer_status_t pv_circular_buffer_write(
     if ((buffer_length <= 0) || (buffer_length > object->capacity)) {
         return PV_CIRCULAR_BUFFER_STATUS_INVALID_ARGUMENT;
     }
+    if (object->count + buffer_length > object->capacity) {
+        return PV_CIRCULAR_BUFFER_STATUS_WRITE_OVERFLOW;
+    }
 
     const int32_t available = object->capacity - object->write_index;
     const int32_t to_copy = (buffer_length < available) ? buffer_length : available;
 
-    if (object->count + to_copy > object->capacity) {
-        return PV_CIRCULAR_BUFFER_STATUS_WRITE_OVERFLOW;
-    }
-
-    void *dst_ptr = (char *) object->buffer + (object->write_index * object->element_size);
+    void *dst_ptr = (int8_t *) object->buffer + (object->write_index * object->element_size);
     const void *src_ptr = buffer;
 
     memcpy(dst_ptr, src_ptr, to_copy * object->element_size);
 
     object->write_index = (object->write_index + to_copy) % object->capacity;
-    object->count += to_copy;
+
+    const int32_t remaining = buffer_length - to_copy;
+    if (remaining > 0) {
+        dst_ptr = (int8_t *) object->buffer + (object->write_index * object->element_size);
+        src_ptr = (int8_t *) buffer + (to_copy * object->element_size);
+
+        memcpy(dst_ptr, src_ptr, remaining * object->element_size);
+
+        object->write_index = remaining;
+    }
+
+    object->count += buffer_length;
 
     return PV_CIRCULAR_BUFFER_STATUS_SUCCESS;
 }
