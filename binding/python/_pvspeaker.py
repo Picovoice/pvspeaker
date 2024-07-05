@@ -57,6 +57,7 @@ class PvSpeaker(object):
         OUT_OF_MEMORY = 1
         INVALID_ARGUMENT = 2
         INVALID_STATE = 3
+        BUFFER_OVERFLOW = 3
         BACKEND_ERROR = 4
         DEVICE_ALREADY_INITIALIZED = 5
         DEVICE_NOT_INITIALIZED = 6
@@ -67,6 +68,7 @@ class PvSpeaker(object):
         PvSpeakerStatuses.OUT_OF_MEMORY: MemoryError,
         PvSpeakerStatuses.INVALID_ARGUMENT: ValueError,
         PvSpeakerStatuses.INVALID_STATE: ValueError,
+        PvSpeakerStatuses.BUFFER_OVERFLOW: IOError,
         PvSpeakerStatuses.BACKEND_ERROR: SystemError,
         PvSpeakerStatuses.DEVICE_ALREADY_INITIALIZED: ValueError,
         PvSpeakerStatuses.DEVICE_NOT_INITIALIZED: ValueError,
@@ -173,14 +175,13 @@ class PvSpeaker(object):
         if status is not self.PvSpeakerStatuses.SUCCESS:
             raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to stop device.")
 
-    def write(self, pcm) -> True:
-        """Synchronous call to write pcm frames."""
+    def write(self, pcm) -> None:
+        """Synchronous call to write pcm frames to selected device for audio playback."""
 
         i = 0
         while i < len(pcm):
             is_last_frame = i + self._frame_length >= len(pcm)
-            last_frame_length = len(pcm) - i
-            write_frame_length = last_frame_length if is_last_frame else self._frame_length
+            write_frame_length = len(pcm) - i if is_last_frame else self._frame_length
 
             start_index = i
             end_index = i + write_frame_length
@@ -201,8 +202,6 @@ class PvSpeaker(object):
                 raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to write to device.")
 
             i += self._frame_length
-
-        return True
 
     def set_debug_logging(self, is_debug_logging_enabled: bool) -> None:
         """

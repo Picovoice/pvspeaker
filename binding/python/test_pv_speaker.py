@@ -40,13 +40,17 @@ class PvSpeakerTestCase(unittest.TestCase):
         speaker.delete()
 
     def test_start_stop(self):
-        speaker = PvSpeaker(16000, 16, 0)
-        speaker.start()
-        frame = [0] * (512 * 2)
-        is_success = speaker.write(frame)
-        self.assertTrue(is_success)
-        speaker.stop()
-        speaker.delete()
+        error = False
+        try:
+            speaker = PvSpeaker(16000, 16, 0)
+            speaker.start()
+            frame = [0] * (512 * 2)
+            speaker.write(frame)
+            speaker.stop()
+            speaker.delete()
+        except ValueError or IOError:
+            error = True
+        self.assertFalse(error)
 
     def test_set_debug_logging(self):
         speaker = PvSpeaker(16000, 16, 0)
