@@ -77,7 +77,7 @@ PV_API pv_speaker_status_t pv_speaker_init(
 PV_API void pv_speaker_delete(pv_speaker_t *object);
 
 /**
-* Starts playing and buffering audio frames.
+* Starts the audio output device. After starting, pcm frames can be sent to the audio output device via `pv_speaker_write`.
 *
 * @param object PvSpeaker object.
 * @returnStatus Status Code. Returns PV_SPEAKER_STATUS_INVALID_ARGUMENT, PV_SPEAKER_STATUS_DEVICE_NOT_INITIALIZED
@@ -118,23 +118,23 @@ PV_API void pv_speaker_set_debug_logging(
         bool is_debug_logging_enabled);
 
 /**
-* Gets whether the given `pv_speaker_t` instance is currently playing audio or not.
+* Gets whether the given `pv_speaker_t` instance has started and available to receive pcm frames or not.
 *
 * @param object PvSpeaker object.
-* @returns A boolean indicating whether PvSpeaker is currently playing audio or not.
+* @returns A boolean indicating whether PvSpeaker has started and available to receive pcm frames or not.
 */
-PV_API bool pv_speaker_get_is_playing(pv_speaker_t *object);
+PV_API bool pv_speaker_get_is_started(pv_speaker_t *object);
 
 /**
 * Gets the audio device that the given `pv_speaker_t` instance is using.
 *
 * @param object PvSpeaker object.
-* @return A string containing the name of the current playing device.
+* @return A string containing the name of the current audio output device.
 */
 PV_API const char *pv_speaker_get_selected_device(pv_speaker_t *object);
 
 /**
-* Gets the list of available audio devices that can be used for playing.
+* Gets the list of available audio devices that can be used for playing audio.
 * Free the returned `device_list` array using `pv_speaker_free_device_list()`.
 *
 * @param[out] device_list_length The number of available audio devices.

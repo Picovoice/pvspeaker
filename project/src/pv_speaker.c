@@ -323,7 +323,7 @@ PV_API void pv_speaker_set_debug_logging(
     object->is_debug_logging_enabled = is_debug_logging_enabled;
 }
 
-PV_API bool pv_speaker_get_is_playing(pv_speaker_t *object) {
+PV_API bool pv_speaker_get_is_started(pv_speaker_t *object) {
     if (!object) {
         return false;
     }

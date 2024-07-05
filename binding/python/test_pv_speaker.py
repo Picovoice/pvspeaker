@@ -59,12 +59,12 @@ class PvSpeakerTestCase(unittest.TestCase):
         self.assertIsNotNone(speaker)
         speaker.delete()
 
-    def test_is_playing(self):
+    def test_is_started(self):
         speaker = PvSpeaker(16000, 16, 0)
         speaker.start()
-        self.assertTrue(speaker.is_playing)
+        self.assertTrue(speaker.is_started)
         speaker.stop()
-        self.assertFalse(speaker.is_playing)
+        self.assertFalse(speaker.is_started)
         speaker.delete()
 
     def test_selected_device(self):

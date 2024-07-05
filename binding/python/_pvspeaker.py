@@ -144,9 +144,9 @@ class PvSpeaker(object):
         self._write_func.argtypes = [POINTER(self.CPvSpeaker), c_int32, c_void_p]
         self._write_func.restype = self.PvSpeakerStatuses
 
-        self._get_is_playing_func = library.pv_speaker_get_is_playing
-        self._get_is_playing_func.argtypes = [POINTER(self.CPvSpeaker)]
-        self._get_is_playing_func.restype = c_bool
+        self._get_is_started_func = library.pv_speaker_get_is_started
+        self._get_is_started_func.argtypes = [POINTER(self.CPvSpeaker)]
+        self._get_is_started_func.restype = c_bool
 
         self._get_selected_device_func = library.pv_speaker_get_selected_device
         self._get_selected_device_func.argtypes = [POINTER(self.CPvSpeaker)]
@@ -214,10 +214,10 @@ class PvSpeaker(object):
         self._set_debug_logging_func(self._handle, is_debug_logging_enabled)
 
     @property
-    def is_playing(self) -> bool:
-        """Gets whether the speaker is currently playing audio or not."""
+    def is_started(self) -> bool:
+        """Gets whether the speaker has started and is available to receive pcm frames or not."""
 
-        return bool(self._get_is_playing_func(self._handle))
+        return bool(self._get_is_started_func(self._handle))
 
     @property
     def selected_device(self) -> str:
