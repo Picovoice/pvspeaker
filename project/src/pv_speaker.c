@@ -419,6 +419,7 @@ PV_API const char *pv_speaker_status_to_string(pv_speaker_status_t status) {
             "OUT_OF_MEMORY",
             "INVALID_ARGUMENT",
             "INVALID_STATE",
+            "BUFFER_OVERFLOW",
             "BACKEND_ERROR",
             "DEVICE_INITIALIZED",
             "DEVICE_NOT_INITIALIZED",
