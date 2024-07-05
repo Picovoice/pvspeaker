@@ -39,12 +39,12 @@ for platform in platforms:
 MANIFEST_IN = """
 include pvspeaker/LICENSE
 include pvspeaker/__init__.py
-include pvspeaker/_pv_recorder.py
-include pvspeaker/lib/linux/x86_64/libpv_recorder.so
-include pvspeaker/lib/mac/x86_64/libpv_recorder.dylib
-include pvspeaker/lib/mac/arm64/libpv_recorder.dylib
+include pvspeaker/_pv_speaker.py
+include pvspeaker/lib/linux/x86_64/libpv_speaker.so
+include pvspeaker/lib/mac/x86_64/libpv_speaker.dylib
+include pvspeaker/lib/mac/arm64/libpv_speaker.dylib
 recursive-include pvspeaker/lib/raspberry-pi *
-include pvspeaker/lib/windows/amd64/libpv_recorder.dll
+include pvspeaker/lib/windows/amd64/libpv_speaker.dll
 recursive-include pvspeaker/resources/scripts *
 """
 
