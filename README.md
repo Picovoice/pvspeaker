@@ -106,6 +106,7 @@ speaker = PvSpeaker(
     sample_rate=22050,
     bits_per_sample=16,
     device_index=0)
+
 speaker.start()
 ```
 

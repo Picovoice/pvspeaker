@@ -17,7 +17,7 @@ pip3 install pvspeaker
 
 ## Usage
 
-Initialize and begin playing audio:
+Initialize and start `PvSpeaker`:
 
 ```python
 from pvspeaker import PvSpeaker
@@ -26,6 +26,7 @@ speaker = PvSpeaker(
     sample_rate=22050,
     bits_per_sample=16,
     device_index=0)
+
 speaker.start()
 ```
 
@@ -42,6 +43,7 @@ speaker = PvSpeaker(
     sample_rate=22050,
     bits_per_sample=16,
     device_index=0)
+
 speaker.start()
 ```
 
