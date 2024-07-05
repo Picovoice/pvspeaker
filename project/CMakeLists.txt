@@ -1,0 +1,100 @@
+cmake_minimum_required(VERSION 3.4)
+project(pv_speaker VERSION 1.0.0 DESCRIPTION "Picovoice audio player library.")
+
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
+
+option(PV_BUILD_TESTS "Build and run library tests" ON)
+
+if(NOT PV_SPEAKER_PLATFORM)
+    message(FATAL_ERROR "No `PV_SPEAKER_PLATFORM` value was given. Valid platforms are: \n"
+            "linux, mac-arm64, mac-x86_64, windows, raspberry-pi3-32, raspberry-pi3-64,"
+            "raspberry-pi4-32, raspberry-pi4-64, raspberry-pi5-32, raspberry-pi5-64")
+endif()
+
+if (${PV_SPEAKER_PLATFORM} STREQUAL "mac-arm64")
+    add_definitions(-D__PV_SPEAKER_PLATFORM_DARWIN__)
+    set(CMAKE_OSX_ARCHITECTURES "arm64")
+elseif (${PV_SPEAKER_PLATFORM} STREQUAL "mac-x86_64")
+    add_definitions(-D__PV_SPEAKER_PLATFORM_DARWIN__)
+    set(CMAKE_OSX_ARCHITECTURES "x86_64")
+elseif (${PV_SPEAKER_PLATFORM} STREQUAL "linux")
+    add_definitions(-D__PV_SPEAKER_PLATFORM_LINUX__)
+elseif (${PV_SPEAKER_PLATFORM} STREQUAL "raspberry-pi3")
+    set(PV_LINK_ATOMIC ON)
+    add_definitions(-D__PV_SPEAKER_PLATFORM_RASPBERRYPI__)
+    add_compile_options(-mcpu=cortex-a53 -mtune=cortex-a53 -mfloat-abi=hard -mfpu=neon-fp-armv8)
+    add_link_options(-mcpu=cortex-a53 -mtune=cortex-a53 -mfloat-abi=hard -mfpu=neon-fp-armv8)
+elseif (${PV_SPEAKER_PLATFORM} STREQUAL "raspberry-pi3-64")
+    set(PV_LINK_ATOMIC ON)
+    add_definitions(-D__PV_SPEAKER_PLATFORM_RASPBERRYPI__)
+    add_compile_options(-mcpu=cortex-a53 -mtune=cortex-a53)
+    add_link_options(-mcpu=cortex-a53 -mtune=cortex-a53)
+elseif (${PV_SPEAKER_PLATFORM} STREQUAL "raspberry-pi4")
+    set(PV_LINK_ATOMIC ON)
+    add_definitions(-D__PV_SPEAKER_PLATFORM_RASPBERRYPI__)
+    add_compile_options(-mcpu=cortex-a72 -mtune=cortex-a72 -mfloat-abi=hard -mfpu=neon-fp-armv8)
+    add_link_options(-mcpu=cortex-a72 -mtune=cortex-a72 -mfloat-abi=hard -mfpu=neon-fp-armv8)
+elseif (${PV_SPEAKER_PLATFORM} STREQUAL "raspberry-pi4-64")
+    set(PV_LINK_ATOMIC ON)
+    add_definitions(-D__PV_SPEAKER_PLATFORM_RASPBERRYPI__)
+    add_compile_options(-mcpu=cortex-a72 -mtune=cortex-a72)
+    add_link_options(-mcpu=cortex-a72 -mtune=cortex-a72)
+elseif (${PV_SPEAKER_PLATFORM} STREQUAL "raspberry-pi5")
+    set(PV_LINK_ATOMIC ON)
+    add_definitions(-D__PV_SPEAKER_PLATFORM_RASPBERRYPI__)
+    add_compile_options(-mcpu=cortex-a76 -mtune=cortex-a76 -mfloat-abi=hard -mfpu=neon-fp-armv8)
+    add_link_options(-mcpu=cortex-a76 -mtune=cortex-a76 -mfloat-abi=hard -mfpu=neon-fp-armv8)
+elseif (${PV_SPEAKER_PLATFORM} STREQUAL "raspberry-pi5-64")
+    set(PV_LINK_ATOMIC ON)
+    add_definitions(-D__PV_SPEAKER_PLATFORM_RASPBERRYPI__)
+    add_compile_options(-mcpu=cortex-a76 -mtune=cortex-a76)
+    add_link_options(-mcpu=cortex-a76 -mtune=cortex-a76)
+elseif (${PV_SPEAKER_PLATFORM} STREQUAL "windows")
+    add_definitions(-D__PV_SPEAKER_PLATFORM_WINDOWS__)
+else ()
+    message(FATAL_ERROR "Unknown platform `${PV_SPEAKER_PLATFORM}`.")
+endif ()
+
+add_library(pv_speaker_object OBJECT src/pv_circular_buffer.c src/pv_speaker.c)
+target_include_directories(pv_speaker_object PUBLIC include)
+target_include_directories(pv_speaker_object PRIVATE src/miniaudio)
+
+add_library(pv_speaker SHARED $<TARGET_OBJECTS:pv_speaker_object>)
+set_target_properties(pv_speaker PROPERTIES PUBLIC_HEADER include/pv_speaker.h)
+target_include_directories(pv_speaker PUBLIC include)
+
+if (NOT ${PV_SPEAKER_PLATFORM} STREQUAL "windows")
+    target_link_libraries(pv_speaker PRIVATE pthread dl m)
+    if(PV_LINK_ATOMIC)
+        target_link_libraries(pv_speaker PRIVATE atomic)
+    endif()
+endif()
+
+if(DEFINED OUTPUT_DIR)
+    add_custom_command(TARGET pv_speaker POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            $<TARGET_FILE:${PROJECT_NAME}>
+            "${CMAKE_SOURCE_DIR}/../lib/${OUTPUT_DIR}/$<TARGET_FILE_NAME:${PROJECT_NAME}>"
+            COMMENT "Copying to output directory.")
+endif()
+
+if (PV_BUILD_TESTS)
+    enable_testing()
+
+    add_executable(test_circular_buffer test/test_pv_circular_buffer.c src/pv_circular_buffer.c)
+    target_include_directories(test_circular_buffer PUBLIC include)
+    add_test(
+            NAME test_circular_buffer
+            COMMAND test_circular_buffer
+    )
+
+    add_executable(test_speaker test/test_pv_speaker.c)
+    target_link_libraries(test_speaker pv_speaker)
+    add_test(
+            NAME test_speaker
+            COMMAND test_speaker
+    )
+endif()

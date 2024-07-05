@@ -1,0 +1,81 @@
+name: C Demo
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'demo/c/**'
+      - '!demo/c/README.md'
+      - '.github/workflows/c-demo.yml'
+  pull_request:
+    branches: [ main, 'v[0-9]+.[0-9]+' ]
+    paths:
+      - 'demo/c/**'
+      - '!demo/c/README.md'
+      - '.github/workflows/c-demo.yml'
+
+defaults:
+  run:
+    working-directory: demo/c
+    shell: bash
+
+jobs:
+  build-github-hosted:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            pv_speaker_platform: linux
+          - os: windows-latest
+            pv_speaker_platform: windows
+          - os: macos-latest
+            pv_speaker_platform: mac-arm64
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Create build directory
+        run: cmake -B ./build -S. -DPV_SPEAKER_PLATFORM="${{ matrix.pv_speaker_platform }}"
+
+      - name: Build demo
+        run: cmake --build ./build
+
+      - name: Run demo
+        run: ./build/pv_speaker_demo --show_audio_devices
+
+  build-self-hosted:
+    runs-on: ${{ matrix.machine }}
+    strategy:
+      matrix:
+        machine: [rpi3-32, rpi3-64, rpi4-32, rpi4-64, rpi5-64]
+        include:
+          - machine: rpi3-32
+            pv_speaker_platform: raspberry-pi3
+          - machine: rpi3-64
+            pv_speaker_platform: raspberry-pi3-64
+          - machine: rpi4-32
+            pv_speaker_platform: raspberry-pi4
+          - machine: rpi4-64
+            pv_speaker_platform: raspberry-pi4-64
+          - machine: rpi5-64
+            pv_speaker_platform: raspberry-pi5-64
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Create build directory
+        run: cmake -B ./build -S . -DPV_SPEAKER_PLATFORM="${{ matrix.pv_speaker_platform }}"
+
+      - name: Build demo
+        run: cmake --build ./build
+
+      - name: Run demo
+        run: ./build/pv_speaker_demo --show_audio_devices
