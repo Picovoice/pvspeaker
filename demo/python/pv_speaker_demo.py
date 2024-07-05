@@ -13,8 +13,6 @@
 import argparse
 import wave
 import array
-import sys
-sys.path.append("../../binding/python/")
 
 from pvspeaker import PvSpeaker
 
@@ -108,6 +106,7 @@ def main():
                 speaker.delete()
             if wavfile is not None:
                 wavfile.close()
+
 
 if __name__ == "__main__":
     main()

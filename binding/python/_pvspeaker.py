@@ -294,6 +294,7 @@ class PvSpeaker(object):
             cls._library = cdll.LoadLibrary(cls._relative_library_path)
         return cls._library
 
+
 __all__ = [
     'PvSpeaker',
 ]

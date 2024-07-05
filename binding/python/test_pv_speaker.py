@@ -107,5 +107,6 @@ class PvSpeakerTestCase(unittest.TestCase):
         self.assertIsInstance(bits_per_sample, int)
         speaker.delete()
 
+
 if __name__ == '__main__':
     unittest.main()
