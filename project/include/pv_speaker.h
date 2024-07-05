@@ -165,13 +165,6 @@ PV_API void pv_speaker_free_available_devices(
 PV_API const char *pv_speaker_status_to_string(pv_speaker_status_t status);
 
 /**
-* Gets the audio sample rate used by PvSpeaker.
-*
-* @return Sample rate.
-*/
-PV_API int32_t pv_speaker_sample_rate(void);
-
-/**
 * Gets the PvSpeaker version.
 *
 * @return Version.
