@@ -50,8 +50,10 @@ speaker.start()
 Write frames of audio:
 
 ```python
-frame = [0] * 512
-speaker.write(frame)
+def get_next_audio_frame():
+    pass
+
+speaker.write(get_next_audio_frame())
 ```
 
 When all frames have been written, run `stop()` on the instance:
