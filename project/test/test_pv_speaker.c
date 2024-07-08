@@ -99,21 +99,21 @@ static void test_pv_speaker_start_stop(void) {
             pv_speaker_status_to_string(status),
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
 
-    printf("Check is_playing on NULL\n");
-    bool is_playing = pv_speaker_get_is_playing(NULL);
+    printf("Check is_started on NULL\n");
+    bool is_started = pv_speaker_get_is_started(NULL);
     check_condition(
-            is_playing == false,
+            is_started == false,
             __FUNCTION__,
             __LINE__,
-            "get_is_playing returned true on a NULL object.");
+            "get_is_started returned true on a NULL object.");
 
-    printf("Check is_playing on before start\n");
-    is_playing = pv_speaker_get_is_playing(speaker);
+    printf("Check is_started on before start\n");
+    is_started = pv_speaker_get_is_started(speaker);
     check_condition(
-            is_playing == false,
+            is_started == false,
             __FUNCTION__,
             __LINE__,
-            "get_is_playing returned true - expected false.");
+            "get_is_started returned true - expected false.");
 
     printf("Call start on null object\n");
     status = pv_speaker_start(NULL);
@@ -175,13 +175,13 @@ static void test_pv_speaker_start_stop(void) {
             pv_speaker_status_to_string(status),
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
 
-    printf("Check is_playing on started speaker\n");
-    is_playing = pv_speaker_get_is_playing(speaker);
+    printf("Check is_started on started speaker\n");
+    is_started = pv_speaker_get_is_started(speaker);
     check_condition(
-            is_playing == true,
+            is_started == true,
             __FUNCTION__,
             __LINE__,
-            "get_is_playing returned false - expected true.");
+            "get_is_started returned false - expected true.");
 
     printf("Call stop on null speaker object\n");
     status = pv_speaker_stop(NULL);
@@ -203,13 +203,13 @@ static void test_pv_speaker_start_stop(void) {
             pv_speaker_status_to_string(status),
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
 
-    printf("Check is_playing on stopped speaker\n");
-    is_playing = pv_speaker_get_is_playing(speaker);
+    printf("Check is_started on stopped speaker\n");
+    is_started = pv_speaker_get_is_started(speaker);
     check_condition(
-            is_playing == false,
+            is_started == false,
             __FUNCTION__,
             __LINE__,
-            "get_is_playing returned true - expected false.");
+            "get_is_started returned true - expected false.");
 
     pv_speaker_delete(speaker);
 }
