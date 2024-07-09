@@ -23,30 +23,30 @@ class PvSpeakerStatusIOError extends Error {}
 class PvSpeakerStatusRuntimeError extends Error {}
 
 function pvSpeakerStatusToException(status: PvSpeakerStatus, errorMessage: string): Error {
-    switch (status) {
-        case PvSpeakerStatus.OUT_OF_MEMORY:
-            return new PvSpeakerStatusOutOfMemoryError(errorMessage);
-        case PvSpeakerStatus.INVALID_ARGUMENT:
-            return new PvSpeakerStatusInvalidArgumentError(errorMessage);
-        case PvSpeakerStatus.INVALID_STATE:
-            return new PvSpeakerStatusInvalidStateError(errorMessage);
-        case PvSpeakerStatus.OVERFLOW_BUFFER:
-            return new PvSpeakerStatusOverflowBufferError(errorMessage);
-        case PvSpeakerStatus.BACKEND_ERROR:
-            return new PvSpeakerStatusBackendError(errorMessage);
-        case PvSpeakerStatus.DEVICE_ALREADY_INITIALIZED:
-            return new PvSpeakerStatusDeviceAlreadyInitializedError(errorMessage);
-        case PvSpeakerStatus.DEVICE_NOT_INITIALIZED:
-            return new PvSpeakerStatusDeviceNotInitializedError(errorMessage);
-        case PvSpeakerStatus.IO_ERROR:
-            return new PvSpeakerStatusIOError(errorMessage);
-        case PvSpeakerStatus.RUNTIME_ERROR:
-            return new PvSpeakerStatusRuntimeError(errorMessage);
-        default:
-            // eslint-disable-next-line
-            console.warn(`Unknown error code: ${status}`);
-            return new Error(errorMessage);
-    }
+  switch (status) {
+    case PvSpeakerStatus.OUT_OF_MEMORY:
+      return new PvSpeakerStatusOutOfMemoryError(errorMessage);
+    case PvSpeakerStatus.INVALID_ARGUMENT:
+      return new PvSpeakerStatusInvalidArgumentError(errorMessage);
+    case PvSpeakerStatus.INVALID_STATE:
+      return new PvSpeakerStatusInvalidStateError(errorMessage);
+    case PvSpeakerStatus.OVERFLOW_BUFFER:
+      return new PvSpeakerStatusOverflowBufferError(errorMessage);
+    case PvSpeakerStatus.BACKEND_ERROR:
+      return new PvSpeakerStatusBackendError(errorMessage);
+    case PvSpeakerStatus.DEVICE_ALREADY_INITIALIZED:
+      return new PvSpeakerStatusDeviceAlreadyInitializedError(errorMessage);
+    case PvSpeakerStatus.DEVICE_NOT_INITIALIZED:
+      return new PvSpeakerStatusDeviceNotInitializedError(errorMessage);
+    case PvSpeakerStatus.IO_ERROR:
+      return new PvSpeakerStatusIOError(errorMessage);
+    case PvSpeakerStatus.RUNTIME_ERROR:
+      return new PvSpeakerStatusRuntimeError(errorMessage);
+    default:
+      // eslint-disable-next-line
+      console.warn(`Unknown error code: ${status}`);resolve
+      return new Error(errorMessage);
+  }
 }
 
 export default pvSpeakerStatusToException;

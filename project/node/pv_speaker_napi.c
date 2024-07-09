@@ -26,18 +26,13 @@ napi_value napi_pv_speaker_init(napi_env env, napi_callback_info info) {
         return NULL;
     }
 
-    int32_t frame_length;
-    status = napi_get_value_int32(env, args[1], &frame_length);
-    if (status != napi_ok) {
-        napi_throw_error(
-                env,
-                pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT),
-                "Unable to get the frame length");
-        return NULL;
-    }
-
-    int32_t bits_per_sample;
-    status = napi_get_value_int32(env, args[2], &bits_per_sample);
+option(
+    "-i, --audio_device_index <number>",
+    "index of audio device to use to play audio",
+    Number,
+    -1
+  ).option    int32_t bits_per_sample;
+    status = napi_get_value_int32(env, args[1], &bits_per_sample);
     if (status != napi_ok) {
         napi_throw_error(
                 env,
@@ -47,12 +42,22 @@ napi_value napi_pv_speaker_init(napi_env env, napi_callback_info info) {
     }
 
     int32_t device_index;
-    status = napi_get_value_int32(env, args[3], &device_index);
+    status = napi_get_value_int32(env, args[2], &device_index);
     if (status != napi_ok) {
         napi_throw_error(
                 env,
                 pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT),
                 "Unable to get the device index");
+        return NULL;
+    }
+
+    int32_t frame_length;
+    status = napi_get_value_int32(env, args[3], &frame_length);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT),
+                "Unable to get the frame length");
         return NULL;
     }
 
@@ -312,7 +317,7 @@ napi_value napi_pv_speaker_write(napi_env env, napi_callback_info info) {
     return result;
 }
 
-napi_value napi_pv_speaker_get_is_playing(napi_env env, napi_callback_info info) {
+napi_value napi_pv_speaker_get_is_started(napi_env env, napi_callback_info info) {
     size_t argc = 1;
     napi_value args[1];
     napi_status status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
@@ -335,15 +340,15 @@ napi_value napi_pv_speaker_get_is_playing(napi_env env, napi_callback_info info)
         return NULL;
     }
 
-    bool is_playing = pv_speaker_get_is_playing((pv_speaker_t *)(uintptr_t) object_id);
+    bool is_started = pv_speaker_get_is_started((pv_speaker_t *)(uintptr_t) object_id);
 
     napi_value result;
-    status = napi_get_boolean(env, is_playing, &result);
+    status = napi_get_boolean(env, is_started, &result);
     if (status != napi_ok) {
         napi_throw_error(
                 env,
                 pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT),
-                "Unable to get is playing flag.");
+                "Unable to get is started flag.");
         return NULL;
     }
 
@@ -517,7 +522,7 @@ napi_value Init(napi_env env, napi_value exports) {
     status = napi_define_properties(env, exports, 1, &desc);
     assert(status == napi_ok);
 
-    desc = DECLARE_NAPI_METHOD("get_is_playing", napi_pv_speaker_get_is_playing);
+    desc = DECLARE_NAPI_METHOD("get_is_started", napi_pv_speaker_get_is_started);
     status = napi_define_properties(env, exports, 1, &desc);
     assert(status == napi_ok);
 
