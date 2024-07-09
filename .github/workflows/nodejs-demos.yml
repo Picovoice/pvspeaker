@@ -38,14 +38,14 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Pre-build dependencies
-        run: npm install yarn
-
       # ************** REMOVE AFTER RELEASE ********************
       - name: Build Node.js SDK
         run: yarn && yarn build
         working-directory: binding/nodejs
       # ********************************************************
+
+      - name: Pre-build dependencies
+        run: npm install yarn
 
       - name: Install dependencies
         run: yarn install
@@ -65,14 +65,14 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Pre-build dependencies
-        run: npm install yarn
-
       # ************** REMOVE AFTER RELEASE ********************
       - name: Build Node.js SDK
         run: yarn && yarn build
         working-directory: binding/nodejs
       # ********************************************************
+
+      - name: Pre-build dependencies
+        run: npm install yarn
 
       - name: Install dependencies
         run: yarn install

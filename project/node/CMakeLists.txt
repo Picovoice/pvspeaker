@@ -22,7 +22,7 @@ if (${PV_SPEAKER_PLATFORM} STREQUAL "windows")
             DOWNLOAD_DIR ${NODE_WIN_LIB_DIR}
             CONFIGURE_COMMAND ""
             BUILD_COMMAND gendef.exe ${NODE_WIN_LIB_DIR}/node.exe
-            COMMAND dlltool.exe -d node.def -y ${NODE_WIN_LIB_DIR}/node.a
+                COMMAND dlltool.exe -d node.def -y ${NODE_WIN_LIB_DIR}/node.a
             INSTALL_COMMAND ""
     )
     set(NODE_LIB ${NODE_WIN_LIB_DIR}/node.a)

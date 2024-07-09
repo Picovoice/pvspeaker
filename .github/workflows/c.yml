@@ -53,6 +53,7 @@ jobs:
           name: ${{ matrix.pv_speaker_platform }}
           path: |
             lib/${{ matrix.output_dir }}/libpv_speaker.*
+            lib/node/${{ inputs.output_dir }}/pv_speaker.node
           retention-days: 3
 
   build-self-hosted:
@@ -103,6 +104,7 @@ jobs:
           name: ${{ matrix.pv_speaker_platform }}
           path: |
             lib/${{ matrix.output_dir }}/libpv_speaker.*
+            lib/node/${{ inputs.output_dir }}/pv_speaker.node
           retention-days: 3
 
   build-mac:
@@ -138,6 +140,7 @@ jobs:
           name: ${{ matrix.pv_speaker_platform }}
           path: |
             lib/${{ matrix.output_dir }}/libpv_speaker.*
+            lib/node/${{ inputs.output_dir }}/pv_speaker.node
           retention-days: 3
 
   build-windows:
@@ -168,6 +171,7 @@ jobs:
           name: windows
           path: |
             lib/windows/amd64/libpv_speaker.*
+            lib/node/windows/amd64/pv_speaker.node
           retention-days: 3
 
   collect-artifacts:
