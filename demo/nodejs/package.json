@@ -1,0 +1,29 @@
+{
+  "name": "@picovoice/pvspeaker-node-demo",
+  "version": "1.0.0",
+  "description": "Picovoice PvSpeaker demo",
+  "scripts": {
+    "demo": "node demo.js"
+  },
+  "bin": {
+    "pvspeaker-node-demo": "./demo.js"
+  },
+  "keywords": [
+    "speaker, play, sound, audio"
+  ],
+  "author": "Picovoice, Inc.",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@picovoice/pvspeaker-node": "file:../../binding/nodejs",
+    "commander": "^6.1.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Picovoice/pvspeaker.git",
+    "directory": "demo/nodejs"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
