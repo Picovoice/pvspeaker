@@ -33,51 +33,42 @@ describe("Test PvSpeaker", () => {
     const speaker = new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE);
     speaker.start();
 
-    let isError = false;
-    try {
+    const f = async () => {
       const frames = new Int16Array(FRAME_LENGTH * 2);
       speaker.writeSync(frames);
       await speaker.write(frames);
-    } catch (e) {
-      isError = true;
+      speaker.release();
     }
-    expect(isError).toBeFalsy();
 
-    speaker.release();
+    expect(f).not.toThrow(Error);
   });
 
   test("start stop (Uint8Array)", async () => {
     const speaker = new PvSpeaker(SAMPLE_RATE, 8);
     speaker.start();
 
-    let isError = false;
-    try {
+    const f = async () => {
       const frames = new Uint8Array(FRAME_LENGTH * 2);
       speaker.writeSync(frames);
       await speaker.write(frames);
-    } catch (e) {
-      isError = true;
+      speaker.release();
     }
-    expect(isError).toBeFalsy();
 
-    speaker.release();
+    expect(f).not.toThrow(Error);
   });
 
   test("start stop (Int32Array)", async () => {
     const speaker = new PvSpeaker(SAMPLE_RATE, 32);
     speaker.start();
 
-    let isError = false;
-    try {
+    const f = async () => {
       const frames = new Int32Array(FRAME_LENGTH * 2);
       speaker.writeSync(frames);
       await speaker.write(frames);
-    } catch (e) {
-      isError = true;
+      speaker.release();
     }
-    expect(isError).toBeFalsy();
 
-    speaker.release();
+    expect(f).not.toThrow(Error);
   });
 
   test("set debug logging", () => {

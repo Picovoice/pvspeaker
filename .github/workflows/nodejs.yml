@@ -53,6 +53,8 @@ jobs:
         run: yarn build
 
       - name: Test
+        env:
+          SDL_AUDIODRIVER: "disk"
         run: yarn test
 
   build-self-hosted:
@@ -80,4 +82,6 @@ jobs:
         run: yarn build
 
       - name: Test
+        env:
+          SDL_AUDIODRIVER: "disk"
         run: yarn test
