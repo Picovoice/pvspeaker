@@ -54,6 +54,7 @@ jobs:
 
       - name: Test
         env:
+          SDL_VIDEODRIVER: "dummy"
           SDL_AUDIODRIVER: "disk"
         run: yarn test
 
@@ -83,5 +84,6 @@ jobs:
 
       - name: Test
         env:
+          SDL_VIDEODRIVER: "dummy"
           SDL_AUDIODRIVER: "disk"
         run: yarn test
