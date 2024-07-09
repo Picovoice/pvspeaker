@@ -53,7 +53,7 @@ jobs:
         run: yarn build
 
       - name: Emulate Soundcard
-        run: sudo apt-get install alsa-plugins
+        run: sudo apt-get install pulseaudio
 
       - name: Test
         run: yarn test
