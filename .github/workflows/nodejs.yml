@@ -52,10 +52,10 @@ jobs:
       - name: Build
         run: yarn build
 
+      - name: Emulate Soundcard
+        run: sudo apt-get install alsa-plugins
+
       - name: Test
-        env:
-          SDL_VIDEODRIVER: "dummy"
-          SDL_AUDIODRIVER: "disk"
         run: yarn test
 
   build-self-hosted:
@@ -82,8 +82,8 @@ jobs:
       - name: Build
         run: yarn build
 
+      - name: Emulate Soundcard
+        run: sudo apt-get install pulseaudio
+
       - name: Test
-        env:
-          SDL_VIDEODRIVER: "dummy"
-          SDL_AUDIODRIVER: "disk"
         run: yarn test
