@@ -1,6 +1,7 @@
 aarch
 argstype
 armv
+arraybuffer
 bitwidth
 Cdecl
 cpvspeaker
