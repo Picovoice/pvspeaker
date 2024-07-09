@@ -27,7 +27,7 @@ program
   "show the list of available devices"
 ).option(
   "-p, --input_wav_path <string>",
-  "path to wav file to play audio from"
+  "path to PCM WAV file to be played"
 );
 
 if (process.argv.length < 2) {
