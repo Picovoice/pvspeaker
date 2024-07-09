@@ -52,8 +52,13 @@ jobs:
       - name: Build
         run: yarn build
 
-      - name: Emulate Soundcard
-        run: sudo apt-get install pulseaudio -y
+      - name: Install PulseAudio on Ubuntu
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pulseaudio
+          pulseaudio --check || pulseaudio --start
+          pactl load-module module-null-sink sink_name=vspeaker sink_properties=device.description=virtual_speaker
+          pactl load-module module-remap-source master=vspeaker.monitor source_name=vmic source_properties=device.description=virtual_mic
 
       - name: Test
         run: yarn test
@@ -81,9 +86,6 @@ jobs:
 
       - name: Build
         run: yarn build
-
-      - name: Emulate Soundcard
-        run: sudo apt-get install pulseaudio -y
 
       - name: Test
         run: yarn test
