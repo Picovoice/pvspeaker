@@ -53,7 +53,7 @@ jobs:
         run: yarn build
 
       - name: Emulate Soundcard
-        run: sudo apt-get install pulseaudio
+        run: sudo apt-get install pulseaudio -y
 
       - name: Test
         run: yarn test
@@ -83,7 +83,7 @@ jobs:
         run: yarn build
 
       - name: Emulate Soundcard
-        run: sudo apt-get install pulseaudio
+        run: sudo apt-get install pulseaudio -y
 
       - name: Test
         run: yarn test
