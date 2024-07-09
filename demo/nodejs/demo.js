@@ -97,10 +97,14 @@ async function runDemo() {
     console.log(`Using device: ${speaker.getSelectedDevice()}`);
 
     console.log("Playing audio...");
-    speaker.writeSync(pcm);
-    speaker.stop();
+    try {
+      speaker.writeSync(pcm);
+      speaker.stop();
+      console.log("Finished playing audio...");
+    } catch (e) {
+      console.log(e.message);
+    }
 
-    console.log("Finished playing audio...");
     speaker.release();
   }
 }

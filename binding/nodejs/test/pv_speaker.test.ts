@@ -47,7 +47,7 @@ describe("Test PvSpeaker", () => {
   });
 
   test("start stop (Uint8Array)", async () => {
-    const speaker = new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE);
+    const speaker = new PvSpeaker(SAMPLE_RATE, 8);
     speaker.start();
 
     let isError = false;
@@ -64,7 +64,7 @@ describe("Test PvSpeaker", () => {
   });
 
   test("start stop (Int32Array)", async () => {
-    const speaker = new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE);
+    const speaker = new PvSpeaker(SAMPLE_RATE, 32);
     speaker.start();
 
     let isError = false;

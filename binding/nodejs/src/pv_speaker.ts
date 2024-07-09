@@ -125,6 +125,22 @@ class PvSpeaker {
   }
 
   private _handlePcm(pcm: Uint8Array | Int16Array | Int32Array): void {
+    if (pcm instanceof Uint8Array && this._bitsPerSample !== 8) {
+      throw pvSpeakerStatusToException(
+        PvSpeakerStatus.INVALID_ARGUMENT,
+        `Expected 8 bits per sample for Uint8Array, but PvSpeaker was initialized with ${this.bitsPerSample} bits per sample.`);
+    }
+    if (pcm instanceof Int16Array && this._bitsPerSample !== 16) {
+      throw pvSpeakerStatusToException(
+        PvSpeakerStatus.INVALID_ARGUMENT,
+        `Expected 16 bits per sample for Int16Array, but PvSpeaker was initialized with ${this.bitsPerSample} bits per sample.`);
+    }
+    if (pcm instanceof Int32Array && this._bitsPerSample !== 32) {
+      throw pvSpeakerStatusToException(
+        PvSpeakerStatus.INVALID_ARGUMENT,
+        `Expected 32 bits per sample for Int32Array, but PvSpeaker was initialized with ${this.bitsPerSample} bits per sample.`);
+    }
+
     let i = 0;
     while (i < pcm.length) {
       const isLastFrame = i + this.frameLength >= pcm.length;
