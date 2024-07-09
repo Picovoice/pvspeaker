@@ -26,12 +26,7 @@ napi_value napi_pv_speaker_init(napi_env env, napi_callback_info info) {
         return NULL;
     }
 
-option(
-    "-i, --audio_device_index <number>",
-    "index of audio device to use to play audio",
-    Number,
-    -1
-  ).option    int32_t bits_per_sample;
+    int32_t bits_per_sample;
     status = napi_get_value_int32(env, args[1], &bits_per_sample);
     if (status != napi_ok) {
         napi_throw_error(

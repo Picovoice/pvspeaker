@@ -90,13 +90,6 @@ async function runDemo() {
         throw new Error(`Unsupported bits per sample: ${bitsPerSample}`);
     }
 
-    console.log("Playing audio...");
-option(
-    "-i, --audio_device_index <number>",
-    "index of audio device to use to play audio",
-    Number,
-    -1
-  ).option
     const speaker = new PvSpeaker(sampleRate, bitsPerSample, audioDeviceIndex);
     console.log(`Using PvSpeaker version: ${speaker.version}`);
 

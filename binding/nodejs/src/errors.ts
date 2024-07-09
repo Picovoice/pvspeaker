@@ -44,7 +44,7 @@ function pvSpeakerStatusToException(status: PvSpeakerStatus, errorMessage: strin
       return new PvSpeakerStatusRuntimeError(errorMessage);
     default:
       // eslint-disable-next-line
-      console.warn(`Unknown error code: ${status}`);resolve
+      console.warn(`Unknown error code: ${status}`);
       return new Error(errorMessage);
   }
 }
