@@ -58,7 +58,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y pulseaudio
           pulseaudio --check || pulseaudio --start
-          pactl load-module module-null-sink sink_name=vspeaker sink_properties=device.description=virtual_speaker
+          pactl load-module module-null-sink
 
       - name: Test
         run: yarn test
@@ -91,12 +91,14 @@ jobs:
         if: matrix.machine == 'rpi3-32' ||
             matrix.machine == 'rpi3-64' ||
             matrix.machine == 'rpi4-32' ||
-            matrix.machine == 'rpi4-64'
+            matrix.machine == 'rpi4-64' ||
+            matrix.machine == 'rpi5-32' ||
+            matrix.machine == 'rpi5-64'
         run: |
           sudo apt-get update
           sudo apt-get install -y pulseaudio
           pulseaudio --check || pulseaudio --start
-          pactl load-module module-null-sink sink_name=vspeaker sink_properties=device.description=virtual_speaker
+          pactl load-module module-null-sink
 
       - name: Test
         run: yarn test
