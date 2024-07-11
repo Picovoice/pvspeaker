@@ -24,9 +24,9 @@ const { PvSpeaker } = require("@picovoice/pvspeaker-node");
 
 const sampleRate = 22050;
 const bitsPerSample = 16;
-const recorder = new PvSpeaker(sampleRate, bitsPerSample);
+const speaker = new PvSpeaker(sampleRate, bitsPerSample);
 
-recorder.start()
+speaker.start()
 ```
 
 (or)
@@ -42,19 +42,19 @@ const devices = PvSpeaker.getAvailableDevices()
 const sampleRate = 22050;
 const bitsPerSample = 16;
 const deviceIndex = 0;
-const recorder = new PvSpeaker(sampleRate, bitsPerSample, deviceIndex);
+const speaker = new PvSpeaker(sampleRate, bitsPerSample, deviceIndex);
 
-recorder.start()
+speaker.start()
 ```
 
 Write frames of audio:
 
 ```typescript
-function getNextAudioFrame(): Uint8Array | Int16Array | Int32Array {
+function getNextAudioFrame(): ArrayBuffer {
     //
 }
 
-speaker.writeSync(getNextAudioFrame())
+speaker.write(getNextAudioFrame())
 ```
 
 To stop recording, call `stop()` on the instance:

@@ -191,11 +191,11 @@ speaker.start()
 Write frames of audio:
 
 ```typescript
-function getNextAudioFrame(): Uint8Array | Int16Array | Int32Array {
+function getNextAudioFrame(): ArrayBuffer {
     //
 }
 
-speaker.writeSync(getNextAudioFrame())
+speaker.write(getNextAudioFrame())
 ```
 
 To stop recording, call `stop()` on the instance:

@@ -46,49 +46,32 @@ async function runDemo() {
       console.log(`index: ${i}, device name: ${devices[i]}`)
     }
   } else {
-    const buffer = fs.readFileSync(inputWavPath);
+    const wavBuffer = fs.readFileSync(inputWavPath);
 
-    if (buffer.toString('utf8', 0, 4) !== 'RIFF' || buffer.toString('utf8', 8, 12) !== 'WAVE') {
+    if (wavBuffer.toString('utf8', 0, 4) !== 'RIFF' || wavBuffer.toString('utf8', 8, 12) !== 'WAVE') {
       throw new Error('Invalid WAV file');
     }
 
-    const formatChunkOffset = buffer.indexOf('fmt ', 12);
+    const formatChunkOffset = wavBuffer.indexOf('fmt ', 12);
     if (formatChunkOffset === -1) {
       throw new Error('Invalid WAV file: fmt chunk not found');
     }
 
-    const numChannels = buffer.readUInt16LE(formatChunkOffset + 10);
-    const sampleRate = buffer.readUInt32LE(formatChunkOffset + 12);
-    const bitsPerSample = buffer.readUInt16LE(formatChunkOffset + 22);
+    const numChannels = wavBuffer.readUInt16LE(formatChunkOffset + 10);
+    const sampleRate = wavBuffer.readUInt32LE(formatChunkOffset + 12);
+    const bitsPerSample = wavBuffer.readUInt16LE(formatChunkOffset + 22);
 
     if (numChannels !== 1) {
       throw new Error('WAV file must have a single channel (MONO)');
     }
 
-    const dataChunkOffset = buffer.indexOf('data', formatChunkOffset + 24);
+    const dataChunkOffset = wavBuffer.indexOf('data', formatChunkOffset + 24);
     if (dataChunkOffset === -1) {
       throw new Error('Invalid WAV file: data chunk not found');
     }
 
-    const dataChunkSize = buffer.readUInt32LE(dataChunkOffset + 4);
-    const pcmDataStart = dataChunkOffset + 8;
-    const pcmDataEnd = pcmDataStart + dataChunkSize;
-    const pcmDataBuffer = buffer.subarray(pcmDataStart, pcmDataEnd);
-
-    let pcm;
-    switch (bitsPerSample) {
-      case 8:
-        pcm = new Uint8Array(pcmDataBuffer);
-        break;
-      case 16:
-        pcm = new Int16Array(pcmDataBuffer.buffer, pcmDataBuffer.byteOffset, pcmDataBuffer.byteLength / 2);
-        break;
-      case 32:
-        pcm = new Int32Array(pcmDataBuffer.buffer, pcmDataBuffer.byteOffset, pcmDataBuffer.byteLength / 4);
-        break;
-      default:
-        throw new Error(`Unsupported bits per sample: ${bitsPerSample}`);
-    }
+    const headerSize = 44;
+    const pcmBuffer = wavBuffer.buffer.slice(headerSize);
 
     const speaker = new PvSpeaker(sampleRate, bitsPerSample, audioDeviceIndex);
     console.log(`Using PvSpeaker version: ${speaker.version}`);
@@ -98,7 +81,7 @@ async function runDemo() {
 
     console.log("Playing audio...");
     try {
-      speaker.writeSync(pcm);
+      speaker.write(pcmBuffer);
       speaker.stop();
       console.log("Finished playing audio...");
     } catch (e) {

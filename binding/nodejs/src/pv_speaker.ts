@@ -48,9 +48,6 @@ class PvSpeaker {
     frameLength: number = 512,
     bufferedFramesCount = 50,
   ) {
-    if (bitsPerSample === 24 || (bitsPerSample !== 8 && bitsPerSample !== 16 && bitsPerSample !== 32)) {
-      throw pvSpeakerStatusToException(PvSpeakerStatus.INVALID_ARGUMENT, `Invalid bits per sample: ${bitsPerSample}`);
-    }
     let pvSpeakerHandleAndStatus;
     try {
       pvSpeakerHandleAndStatus = PvSpeaker._pvSpeaker.init(
@@ -105,7 +102,7 @@ class PvSpeaker {
   }
 
   /**
-   * Starts the audio output device. After starting, pcm frames can be sent to the audio output device via `write` or `writeSync`.
+   * Starts the audio output device. After starting, pcm frames can be sent to the audio output device via `write`.
    */
   public start(): void {
     const status = PvSpeaker._pvSpeaker.start(this._handle);
@@ -124,58 +121,25 @@ class PvSpeaker {
     }
   }
 
-  private _handlePcm(pcm: Uint8Array | Int16Array | Int32Array): void {
-    if (pcm instanceof Uint8Array && this._bitsPerSample !== 8) {
-      throw pvSpeakerStatusToException(
-        PvSpeakerStatus.INVALID_ARGUMENT,
-        `Expected 8 bits per sample for Uint8Array, but PvSpeaker was initialized with ${this.bitsPerSample} bits per sample.`);
-    }
-    if (pcm instanceof Int16Array && this._bitsPerSample !== 16) {
-      throw pvSpeakerStatusToException(
-        PvSpeakerStatus.INVALID_ARGUMENT,
-        `Expected 16 bits per sample for Int16Array, but PvSpeaker was initialized with ${this.bitsPerSample} bits per sample.`);
-    }
-    if (pcm instanceof Int32Array && this._bitsPerSample !== 32) {
-      throw pvSpeakerStatusToException(
-        PvSpeakerStatus.INVALID_ARGUMENT,
-        `Expected 32 bits per sample for Int32Array, but PvSpeaker was initialized with ${this.bitsPerSample} bits per sample.`);
-    }
-
-    let i = 0;
-    while (i < pcm.length) {
-      const isLastFrame = i + this.frameLength >= pcm.length;
-      const writeFrameLength = isLastFrame ? pcm.length - i : this.frameLength;
-      const frame = pcm.slice(i, i + writeFrameLength);
-
-      const status = PvSpeaker._pvSpeaker.write(this._handle, frame);
-      if (status !== PvSpeakerStatus.SUCCESS) {
-        throw pvSpeakerStatusToException(status, "PvSpeaker failed to write audio data frame.");
-      }
-
-      i += this.frameLength;
-    }
-  }
-  /**
-   * Asynchronous call to write a frame of audio data.
-   *
-   * @returns {Promise<void>}
-   */
-  public async write(pcm: Uint8Array | Int16Array | Int32Array): Promise<void> {
-    return new Promise<void>(resolve => {
-      setTimeout(() => {
-        this._handlePcm(pcm);
-        resolve();
-      });
-    });
-  }
-
   /**
    * Synchronous call to write a frame of audio data.
    *
    * @returns {Boolean}
    */
-  public writeSync(pcm: Uint8Array | Int16Array | Int32Array): void {
-    this._handlePcm(pcm);
+  public write(pcm: ArrayBuffer): void {
+    let i = 0;
+    const frameLength = this._frameLength * this._bitsPerSample / 8;
+    while (i < pcm.byteLength) {
+      const isLastFrame = i + frameLength >= pcm.byteLength;
+      const writeFrameLength = isLastFrame ? pcm.byteLength - i : frameLength;
+      const frame = pcm.slice(i, i + writeFrameLength);
+      const status = PvSpeaker._pvSpeaker.write(this._handle, this._bitsPerSample, frame);
+      if (status !== PvSpeakerStatus.SUCCESS) {
+        throw pvSpeakerStatusToException(status, "PvSpeaker failed to write audio data frame.");
+      }
+
+      i += frameLength;
+    }
   }
 
   /**

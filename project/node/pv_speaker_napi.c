@@ -232,8 +232,8 @@ napi_value napi_pv_speaker_stop(napi_env env, napi_callback_info info) {
 }
 
 napi_value napi_pv_speaker_write(napi_env env, napi_callback_info info) {
-    size_t argc = 2;
-    napi_value args[2];
+    size_t argc = 3;
+    napi_value args[3];
     napi_status status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
     if (status != napi_ok) {
         napi_throw_error(
@@ -254,50 +254,38 @@ napi_value napi_pv_speaker_write(napi_env env, napi_callback_info info) {
         return NULL;
     }
 
-    napi_typedarray_type arr_type = -1;
-    size_t length = 0;
-    void* pcm_data = NULL;
-    napi_value arraybuffer = NULL;
-    size_t byte_offset = 0;
-    status = napi_get_typedarray_info(env, args[1], &arr_type, &length, &pcm_data, &arraybuffer, &byte_offset);
+    int32_t bits_per_sample;
+    status = napi_get_value_int32(env, args[1], &bits_per_sample);
     if (status != napi_ok) {
         napi_throw_error(
                 env,
-                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
-                "Unable to get typedarray");
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT),
+                "Unable to get the bits per sample");
         return NULL;
-    }
-    if (arr_type != napi_uint8_array && arr_type != napi_int16_array && arr_type != napi_int32_array) {
-        napi_throw_error(
-                env,
-                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
-                "Invalid type of input pcm buffer. The input frame has to be 'Uint8Array', 'Int16Array', or 'Int32Array'");
-        return NULL;
-    }
-
-    size_t buffer_length = 0;
-    if (arr_type == napi_uint8_array) {
-        buffer_length = length * sizeof(uint8_t);
-    } else if (arr_type == napi_int16_array) {
-        buffer_length = length * sizeof(int16_t);
-    } else if (arr_type == napi_int32_array) {
-        buffer_length = length * sizeof(int32_t);
     }
 
     void* data = NULL;
-    napi_value res = NULL;
-    status = napi_create_buffer(env, buffer_length, &data, &res);
+    size_t byte_length = 0;
+    status = napi_get_arraybuffer_info(env, args[2], &data, &byte_length);
     if (status != napi_ok) {
         napi_throw_error(
                 env,
                 pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
-                "Unable to get frame");
+                "Unable to get buffer");
         return NULL;
     }
-    memcpy(data, pcm_data, buffer_length);
+
+    int32_t bytes_per_sample = 1;
+    if (bits_per_sample == 16) {
+        bytes_per_sample = 2;
+    } else if (bits_per_sample == 24) {
+        bytes_per_sample = 3;
+    } else if (bits_per_sample == 32) {
+        bytes_per_sample = 4;
+    }
 
     pv_speaker_status_t pv_speaker_status = pv_speaker_write(
-            (pv_speaker_t *)(uintptr_t) object_id, (int32_t) length, data);
+            (pv_speaker_t *)(uintptr_t) object_id, (int32_t) (byte_length / bytes_per_sample), (int8_t *) data);
 
     napi_value result;
     status = napi_create_int32(env, pv_speaker_status, &result);
