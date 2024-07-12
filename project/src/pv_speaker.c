@@ -26,19 +26,15 @@
 
 #define PV_SPEAKER_VERSION "1.0.0"
 
-static const int32_t WRITE_RETRY_COUNT = 500;
-static const int32_t WRITE_SLEEP_MILLI_SECONDS = 2;
-
-static bool is_stopped_and_empty = false;
+static bool is_flushed_and_empty = false;
 static bool is_data_requested_while_empty = false;
 
 struct pv_speaker {
     ma_context context;
     ma_device device;
     pv_circular_buffer_t *buffer;
-    int32_t frame_length;
+    int32_t bits_per_sample;
     bool is_started;
-    bool is_debug_logging_enabled;
     ma_mutex mutex;
 };
 
@@ -49,9 +45,9 @@ static void pv_speaker_ma_callback(ma_device *device, void *output, const void *
 
     ma_mutex_lock(&object->mutex);
 
-    // this callback being invoked after calling `pv_speaker_stop` and the circular buffer is empty indicates that all
+    // this callback being invoked after calling `pv_speaker_flush` and the circular buffer is empty indicates that all
     // frames have been passed to the output buffer, and the device can stop without truncating the last frame of audio
-    if (is_stopped_and_empty) {
+    if (is_flushed_and_empty) {
         is_data_requested_while_empty = true;
         ma_mutex_unlock(&object->mutex);
         return;
@@ -65,18 +61,14 @@ static void pv_speaker_ma_callback(ma_device *device, void *output, const void *
 
 PV_API pv_speaker_status_t pv_speaker_init(
         int32_t sample_rate,
-        int32_t frame_length,
         int16_t bits_per_sample,
+        int32_t buffer_size_secs,
         int32_t device_index,
-        int32_t buffered_frames_count,
         pv_speaker_t **object) {
     if (device_index < PV_SPEAKER_DEFAULT_DEVICE_INDEX) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
     if (sample_rate <= 0) {
-        return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
-    }
-    if (frame_length <= 0) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
     if (bits_per_sample != 8 &&
@@ -85,7 +77,7 @@ PV_API pv_speaker_status_t pv_speaker_init(
         bits_per_sample != 32) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
-    if (buffered_frames_count < 1) {
+    if (buffer_size_secs <= 0) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
     if (!object) {
@@ -188,10 +180,11 @@ PV_API pv_speaker_status_t pv_speaker_init(
         }
     }
 
-    const int32_t buffer_capacity = frame_length * buffered_frames_count;
+    const int32_t buffer_capacity = buffer_size_secs * sample_rate;
+    const int32_t element_size = bits_per_sample / 8;
     pv_circular_buffer_status_t status = pv_circular_buffer_init(
             buffer_capacity,
-            bits_per_sample / 8,
+            element_size,
             &(o->buffer));
 
     if (status != PV_CIRCULAR_BUFFER_STATUS_SUCCESS) {
@@ -199,7 +192,7 @@ PV_API pv_speaker_status_t pv_speaker_init(
         return PV_SPEAKER_STATUS_OUT_OF_MEMORY;
     }
 
-    o->frame_length = frame_length;
+    o->bits_per_sample = bits_per_sample;
 
     *object = o;
 
@@ -221,7 +214,7 @@ PV_API pv_speaker_status_t pv_speaker_start(pv_speaker_t *object) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
 
-    is_stopped_and_empty = false;
+    is_flushed_and_empty = false;
     is_data_requested_while_empty = false;
 
     ma_result result = ma_device_start(&(object->device));
@@ -239,24 +232,74 @@ PV_API pv_speaker_status_t pv_speaker_start(pv_speaker_t *object) {
     return PV_SPEAKER_STATUS_SUCCESS;
 }
 
-PV_API pv_speaker_status_t pv_speaker_stop(pv_speaker_t *object) {
+PV_API pv_speaker_status_t pv_speaker_write(pv_speaker_t *object, int8_t *pcm, int32_t pcm_length) {
+    if (!object) {
+        return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
+    }
+    if (!pcm) {
+        return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
+    }
+    if (pcm_length <= 0) {
+        return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
+    }
+    if (!(object->is_started)) {
+        return PV_SPEAKER_STATUS_INVALID_STATE;
+    }
+
+    int32_t written = 0;
+    while (written < pcm_length) {
+        ma_mutex_lock(&object->mutex);
+
+        int32_t available = 0;
+        pv_circular_buffer_status_t status = pv_circular_buffer_get_available(object->buffer, &available);
+        if (status != PV_CIRCULAR_BUFFER_STATUS_SUCCESS) {
+            ma_mutex_unlock(&object->mutex);
+            return PV_SPEAKER_STATUS_RUNTIME_ERROR;
+        }
+
+        int32_t remaining = pcm_length - written;
+        int32_t to_write = remaining < available ? remaining : available;
+        if (to_write > 0) {
+            status = pv_circular_buffer_write(
+                    object->buffer,
+                    &pcm[written * object->bits_per_sample / 8],
+                    to_write);
+            if (status == PV_CIRCULAR_BUFFER_STATUS_SUCCESS) {
+                written += to_write;
+            }
+        }
+
+        ma_mutex_unlock(&object->mutex);
+    }
+
+    return PV_SPEAKER_STATUS_SUCCESS;
+}
+
+PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object) {
     if (!object) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
 
-    // waits for all frames to be copied to output buffer before stopping
-    while (!is_stopped_and_empty || !is_data_requested_while_empty) {
+    // waits for all frames to be copied to output buffer
+    while (!is_flushed_and_empty || !is_data_requested_while_empty) {
         ma_mutex_lock(&object->mutex);
         int32_t count = 0;
         pv_circular_buffer_status_t status = pv_circular_buffer_get_count(object->buffer, &count);
         if (status == PV_CIRCULAR_BUFFER_STATUS_SUCCESS && count == 0) {
-            is_stopped_and_empty = true;
+            is_flushed_and_empty = true;
         } else if (status != PV_CIRCULAR_BUFFER_STATUS_SUCCESS) {
             ma_mutex_unlock(&object->mutex);
             return PV_SPEAKER_STATUS_RUNTIME_ERROR;
         }
         ma_mutex_unlock(&object->mutex);
-        ma_sleep(WRITE_SLEEP_MILLI_SECONDS);
+    }
+
+    return PV_SPEAKER_STATUS_SUCCESS;
+}
+
+PV_API pv_speaker_status_t pv_speaker_stop(pv_speaker_t *object) {
+    if (!object) {
+        return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
 
     ma_result result = ma_device_stop(&(object->device));
@@ -275,52 +318,6 @@ PV_API pv_speaker_status_t pv_speaker_stop(pv_speaker_t *object) {
     ma_mutex_unlock(&object->mutex);
 
     return PV_SPEAKER_STATUS_SUCCESS;
-}
-
-PV_API pv_speaker_status_t pv_speaker_write(pv_speaker_t *object, int32_t frame_length, void *frame) {
-    if (!object) {
-        return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
-    }
-    if (!frame) {
-        return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
-    }
-    if (frame_length > object->frame_length) {
-        return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
-    }
-    if (!(object->is_started)) {
-        return PV_SPEAKER_STATUS_INVALID_STATE;
-    }
-
-    for (int32_t i = 0; i < WRITE_RETRY_COUNT; i++) {
-        ma_mutex_lock(&object->mutex);
-
-        pv_circular_buffer_status_t status = pv_circular_buffer_write(
-                object->buffer,
-                frame,
-                frame_length);
-        if (status == PV_CIRCULAR_BUFFER_STATUS_WRITE_OVERFLOW && (i == (WRITE_RETRY_COUNT - 1))) {
-            ma_mutex_unlock(&object->mutex);
-            return PV_SPEAKER_STATUS_BUFFER_OVERFLOW;
-        } else if (status == PV_CIRCULAR_BUFFER_STATUS_SUCCESS) {
-            ma_mutex_unlock(&object->mutex);
-            return PV_SPEAKER_STATUS_SUCCESS;
-        } else {
-            ma_mutex_unlock(&object->mutex);
-            ma_sleep(WRITE_SLEEP_MILLI_SECONDS);
-        }
-    }
-
-    return PV_SPEAKER_STATUS_IO_ERROR;
-}
-
-PV_API void pv_speaker_set_debug_logging(
-        pv_speaker_t *object,
-        bool is_debug_logging_enabled) {
-    if (!object) {
-        return;
-    }
-
-    object->is_debug_logging_enabled = is_debug_logging_enabled;
 }
 
 PV_API bool pv_speaker_get_is_started(pv_speaker_t *object) {
@@ -419,7 +416,6 @@ PV_API const char *pv_speaker_status_to_string(pv_speaker_status_t status) {
             "OUT_OF_MEMORY",
             "INVALID_ARGUMENT",
             "INVALID_STATE",
-            "BUFFER_OVERFLOW",
             "BACKEND_ERROR",
             "DEVICE_INITIALIZED",
             "DEVICE_NOT_INITIALIZED",

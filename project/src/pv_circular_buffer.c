@@ -153,6 +153,16 @@ pv_circular_buffer_status_t pv_circular_buffer_write(
     return PV_CIRCULAR_BUFFER_STATUS_SUCCESS;
 }
 
+pv_circular_buffer_status_t pv_circular_buffer_get_available(pv_circular_buffer_t *object, int32_t *available) {
+    if (!object) {
+        return PV_CIRCULAR_BUFFER_STATUS_INVALID_ARGUMENT;
+    }
+
+    *available = object->capacity - object->count;
+
+    return PV_CIRCULAR_BUFFER_STATUS_SUCCESS;
+}
+
 pv_circular_buffer_status_t pv_circular_buffer_get_count(pv_circular_buffer_t *object, int32_t *count) {
     if (!object) {
         return PV_CIRCULAR_BUFFER_STATUS_INVALID_ARGUMENT;

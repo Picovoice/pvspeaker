@@ -10,7 +10,6 @@
 */
 
 #include <getopt.h>
-#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,11 +18,6 @@
 #include "pv_speaker.h"
 
 static volatile bool is_interrupted = false;
-
-void interrupt_handler(int _) {
-    (void) _;
-    is_interrupted = true;
-}
 
 static struct option long_options[] = {
         {"show_audio_devices", no_argument,       NULL, 's'},
@@ -107,13 +101,12 @@ void *read_wav_file(const char *filename, uint32_t *num_samples, uint32_t *sampl
     }
 
     *sample_rate = header.sample_rate;
-
     *bits_per_sample = header.bits_per_sample;
-
     uint32_t bytes_per_sample = header.bits_per_sample / 8;
     *num_samples = header.subchunk2_size / bytes_per_sample;
 
     void *pcm_data = malloc(header.subchunk2_size);
+
     if (!pcm_data) {
         perror("Memory allocation failed");
         fclose(file);
@@ -153,29 +146,25 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
-    signal(SIGINT, interrupt_handler);
     fprintf(stdout, "pv_speaker version: %s\n", pv_speaker_version());
 
     uint32_t num_samples, sample_rate;
     uint16_t bits_per_sample;
-    void *pcm = read_wav_file(input_wav_path, &num_samples, &sample_rate, &bits_per_sample);
+    void *pcm_data = read_wav_file(input_wav_path, &num_samples, &sample_rate, &bits_per_sample);
 
     fprintf(stdout, "Initializing pv_speaker...\n");
-    const int32_t frame_length = 512;
+    const int32_t buffer_size_secs = 20;
     pv_speaker_t *speaker = NULL;
     pv_speaker_status_t status = pv_speaker_init(
             sample_rate,
-            frame_length,
             bits_per_sample,
+            buffer_size_secs,
             device_index,
-            10,
             &speaker);
     if (status != PV_SPEAKER_STATUS_SUCCESS) {
         fprintf(stderr, "Failed to initialize device with %s.\n", pv_speaker_status_to_string(status));
         exit(1);
     }
-
-    pv_speaker_set_debug_logging(speaker, true);
 
     const char *selected_device = pv_speaker_get_selected_device(speaker);
     fprintf(stdout, "Selected device: %s.\n", selected_device);
@@ -187,36 +176,27 @@ int main(int argc, char *argv[]) {
     }
 
     fprintf(stdout, "Playing audio...\n");
-    if (pcm) {
-        char *pcmData = (char *) pcm;
-        for (int i = 0; i < num_samples; i += frame_length) {
-            bool is_last_frame = i + frame_length >= num_samples;
-
-            status = pv_speaker_write(
-                    speaker,
-                    is_last_frame ? num_samples - i : frame_length,
-                    &pcmData[i * bits_per_sample / 8]);
-            if (status != PV_SPEAKER_STATUS_SUCCESS) {
-                fprintf(stderr, "Failed to write with %s.\n", pv_speaker_status_to_string(status));
-                exit(1);
-            }
-            if (is_interrupted) {
-                fprintf(stdout, "\nStopped audio...\n");
-                break;
-            }
+    if (pcm_data) {
+        int8_t *pcm = (int8_t *) pcm_data;
+        status = pv_speaker_write(speaker, pcm, num_samples);
+        if (status != PV_SPEAKER_STATUS_SUCCESS) {
+            fprintf(stderr, "Failed to write with %s.\n", pv_speaker_status_to_string(status));
+            exit(1);
         }
 
         free(pcm);
+    }
+
+    status = pv_speaker_flush(speaker);
+    if (status != PV_SPEAKER_STATUS_SUCCESS) {
+        fprintf(stderr, "Failed to flush pcm with %s.\n", pv_speaker_status_to_string(status));
+        exit(1);
     }
 
     status = pv_speaker_stop(speaker);
     if (status != PV_SPEAKER_STATUS_SUCCESS) {
         fprintf(stderr, "Failed to stop device with %s.\n", pv_speaker_status_to_string(status));
         exit(1);
-    }
-
-    if (!is_interrupted) {
-        fprintf(stdout, "Finished playing audio...\n");
     }
 
     fprintf(stdout, "Deleting pv_speaker...\n");

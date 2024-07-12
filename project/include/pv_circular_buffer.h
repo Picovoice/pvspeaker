@@ -81,6 +81,15 @@ pv_circular_buffer_status_t pv_circular_buffer_write(
         int32_t buffer_length);
 
 /**
+* Gets the current amount of available space in the object's buffer.
+*
+* @param object Circular buffer object.
+* @param available[out] The current amount of available space in the buffer.
+* @return Status Code. Returns PV_CIRCULAR_BUFFER_STATUS_INVALID_ARGUMENT on failure.
+*/
+pv_circular_buffer_status_t pv_circular_buffer_get_available(pv_circular_buffer_t *object, int32_t *available);
+
+/**
 * Gets the current size of the object's buffer.
 *
 * @param object Circular buffer object.
