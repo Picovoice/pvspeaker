@@ -36,6 +36,12 @@ def main():
         help="Path to PCM WAV file to be played.",
         default=None)
 
+    parser.add_argument(
+        "--buffer_size_secs",
+        help="Size of internal pcm buffer in seconds.",
+        type=int,
+        default=20)
+
     args = parser.parse_args()
 
     if args.show_audio_devices:
@@ -45,6 +51,7 @@ def main():
     else:
         device_index = args.audio_device_index
         input_path = args.input_wav_path
+        buffer_size_secs = args.buffer_size_secs
 
         wavfile = None
         speaker = None
@@ -71,6 +78,7 @@ def main():
                 speaker = PvSpeaker(
                     sample_rate=sample_rate,
                     bits_per_sample=bits_per_sample,
+                    buffer_size_secs=buffer_size_secs,
                     device_index=device_index)
                 print("pvspeaker version: %s" % speaker.version)
                 print("Using device: %s" % speaker.selected_device)
@@ -94,6 +102,7 @@ def main():
 
                 print("Playing audio...")
                 speaker.write(pcm)
+                speaker.flush()
                 speaker.stop()
 
                 print("Finished playing audio...")

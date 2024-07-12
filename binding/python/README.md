@@ -25,6 +25,7 @@ from pvspeaker import PvSpeaker
 speaker = PvSpeaker(
     sample_rate=22050,
     bits_per_sample=16,
+    buffer_size_secs=20,
     device_index=0)
 
 speaker.start()
@@ -42,6 +43,7 @@ devices = PvSpeaker.get_available_devices()
 speaker = PvSpeaker(
     sample_rate=22050,
     bits_per_sample=16,
+    buffer_size_secs=20,
     device_index=0)
 
 speaker.start()
@@ -56,13 +58,19 @@ def get_next_audio_frame():
 speaker.write(get_next_audio_frame())
 ```
 
-When all frames have been written, run `stop()` on the instance:
+When all frames have been written, run `flush()` to wait for all buffered pcm data to be played:
+
+```python
+speaker.flush()
+```
+
+Once you are done writing pcm, run `stop()` on the instance:
 
 ```python
 speaker.stop()
 ```
 
-Once you are done, free the resources acquired by PvSpeaker. You do not have to call `stop()` before `delete()`:
+Once you are done completely, free the resources acquired by PvSpeaker. You do not have to call `stop()` before `delete()`:
 
 ```python
 speaker.delete()

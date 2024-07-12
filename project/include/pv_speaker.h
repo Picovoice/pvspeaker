@@ -86,7 +86,7 @@ PV_API pv_speaker_status_t pv_speaker_start(pv_speaker_t *object);
 *
 * @param object PvSpeaker object.
 * @param pcm Pointer to the pcm data that will be written.
-* @param pcm_length Size of the pcm data that is passed in.
+* @param pcm_length Length of the pcm data that is passed in.
 * @return Status Code. Returns PV_SPEAKER_STATUS_INVALID_ARGUMENT, PV_SPEAKER_INVALID_STATE or PV_SPEAKER_IO_ERROR on failure.
 */
 PV_API pv_speaker_status_t pv_speaker_write(pv_speaker_t *object, int8_t *pcm, int32_t pcm_length);

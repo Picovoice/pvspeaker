@@ -20,47 +20,38 @@ class PvSpeakerTestCase(unittest.TestCase):
     def setUpClass(cls):
         PvSpeaker.set_default_library_path(os.path.join('..', '..'))
 
-    def test_invalid_device_index(self):
+    def test_invalid_sample_rate(self):
         with self.assertRaises(ValueError):
-            _ = PvSpeaker(16000, 16, -2)
+            _ = PvSpeaker(0, 16, 20, 0)
 
-    def test_invalid_frame_length(self):
+    def test_invalid_bits_per_sample(self):
+        with self.assertRaises(ValueError):
+            _ = PvSpeaker(16000, 0, 20, 0)
+
+    def test_invalid_buffer_size_secs(self):
         with self.assertRaises(ValueError):
             _ = PvSpeaker(16000, 16, 0, 0)
 
-    def test_invalid_buffered_frame_count(self):
+    def test_invalid_device_index(self):
         with self.assertRaises(ValueError):
-            _ = PvSpeaker(16000, 16, 0, 512, 0)
-
-    def test_set_frame_length(self):
-        speaker = PvSpeaker(16000, 16, 0, 256)
-        frame_length = speaker.frame_length
-        self.assertEqual(frame_length, 256)
-        self.assertIsInstance(frame_length, int)
-        speaker.delete()
+            _ = PvSpeaker(16000, 16, 20, -2)
 
     def test_start_stop(self):
         error = False
         try:
-            speaker = PvSpeaker(16000, 16, 0)
+            speaker = PvSpeaker(16000, 16, 20)
             speaker.start()
-            frame = [0] * (512 * 2)
-            speaker.write(frame)
+            pcm = [0] * (512 * 2)
+            speaker.write(pcm)
+            speaker.flush()
             speaker.stop()
             speaker.delete()
         except ValueError or IOError:
             error = True
         self.assertFalse(error)
 
-    def test_set_debug_logging(self):
-        speaker = PvSpeaker(16000, 16, 0)
-        speaker.set_debug_logging(True)
-        speaker.set_debug_logging(False)
-        self.assertIsNotNone(speaker)
-        speaker.delete()
-
     def test_is_started(self):
-        speaker = PvSpeaker(16000, 16, 0)
+        speaker = PvSpeaker(16000, 16, 20)
         speaker.start()
         self.assertTrue(speaker.is_started)
         speaker.stop()
@@ -68,14 +59,14 @@ class PvSpeakerTestCase(unittest.TestCase):
         speaker.delete()
 
     def test_selected_device(self):
-        speaker = PvSpeaker(16000, 16, 0)
+        speaker = PvSpeaker(16000, 16, 20)
         device = speaker.selected_device
         self.assertIsNotNone(device)
         self.assertIsInstance(device, str)
         speaker.delete()
 
     def test_get_available_devices(self):
-        speaker = PvSpeaker(16000, 16, 0)
+        speaker = PvSpeaker(16000, 16, 20)
         devices = speaker.get_available_devices()
         self.assertIsNotNone(devices)
         for device in devices:
@@ -84,31 +75,31 @@ class PvSpeakerTestCase(unittest.TestCase):
         speaker.delete()
 
     def test_version(self):
-        speaker = PvSpeaker(16000, 16, 0)
+        speaker = PvSpeaker(16000, 16, 20)
         version = speaker.version
         self.assertGreater(len(version), 0)
         self.assertIsInstance(version, str)
         speaker.delete()
 
     def test_sample_rate(self):
-        speaker = PvSpeaker(16000, 16, 0)
+        speaker = PvSpeaker(16000, 16, 20)
         sample_rate = speaker.sample_rate
         self.assertEqual(sample_rate, 16000)
         self.assertIsInstance(sample_rate, int)
         speaker.delete()
 
-    def test_frame_length(self):
-        speaker = PvSpeaker(16000, 16, 0)
-        frame_length = speaker.frame_length
-        self.assertEqual(frame_length, 512)
-        self.assertIsInstance(frame_length, int)
-        speaker.delete()
-
     def test_bits_per_sample(self):
-        speaker = PvSpeaker(16000, 16, 0)
+        speaker = PvSpeaker(16000, 16, 20)
         bits_per_sample = speaker.bits_per_sample
         self.assertEqual(bits_per_sample, 16)
         self.assertIsInstance(bits_per_sample, int)
+        speaker.delete()
+
+    def test_buffer_size_secs(self):
+        speaker = PvSpeaker(16000, 16, 20)
+        buffer_size_secs = speaker.buffer_size_secs
+        self.assertEqual(buffer_size_secs, 20)
+        self.assertIsInstance(buffer_size_secs, int)
         speaker.delete()
 
 
