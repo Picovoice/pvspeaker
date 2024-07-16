@@ -195,12 +195,14 @@ class PvSpeaker(object):
 
         return written_length.value
 
-    def flush(self, pcm=[]) -> int:
+    def flush(self, pcm=None) -> int:
         """
         Synchronous call to write PCM data to the internal circular buffer for audio playback.
         This call blocks the thread until all PCM data has been successfully written and played.
         """
 
+        if pcm is None:
+            pcm = []
         written_length = c_int32()
         status = self._flush_func(
             self._handle, c_char_p(self._pcm_to_bytes(pcm)), c_int32(len(pcm)), byref(written_length))
