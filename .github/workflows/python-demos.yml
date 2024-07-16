@@ -65,7 +65,7 @@ jobs:
     - name: Build dependencies
       run: |
         python3 -m venv .venv
-        python -m pip install -U pip setuptools
+        source .venv/bin/activate
         pip install wheel && cd ../../binding/python && python3 setup.py sdist bdist_wheel && pip install dist/pvspeaker-1.0.1-py3-none-any.whl
 
     - name: Install dependencies
