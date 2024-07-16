@@ -32,6 +32,7 @@ to get a list of possible values.
 ## Usage
 
 1. Create a PvSpeaker object:
+
 ```c
 #include "pv_speaker.h"
 
@@ -61,12 +62,14 @@ if (status != PV_SPEAKER_STATUS_SUCCESS) {
 }
 ```
 
-3. Write pcm data to the speaker:
+3. Write PCM data to the speaker:
+
 ```c
 int32_3 num_samples;
 int8_t *pcm = get_pcm_data(&num_samples);
+int32_3 written_length = 0;
 
-status = pv_speaker_write(speaker, pcm, num_samples);
+pv_speaker_status_t status = pv_speaker_write(speaker, pcm, num_samples, &written_length);
 if (status != PV_SPEAKER_STATUS_SUCCESS) {
     // handle PvSpeaker start error
 }
@@ -75,7 +78,11 @@ if (status != PV_SPEAKER_STATUS_SUCCESS) {
 4. Wait for buffered audio to finish playing:
 
 ```c
-pv_speaker_status_t status = pv_speaker_flush(speaker);
+int32_3 num_samples;
+int8_t *pcm = get_pcm_data(&num_samples);
+int32_3 written_length = 0;
+
+pv_speaker_status_t status = pv_speaker_flush(speaker, pcm, num_samples, &written_length);
 if (status != PV_SPEAKER_STATUS_SUCCESS) {
     // handle PvSpeaker flush error
 }

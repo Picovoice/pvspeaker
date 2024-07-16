@@ -10,6 +10,7 @@
 */
 
 #include <getopt.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,15 +20,21 @@
 
 static volatile bool is_interrupted = false;
 
+void interrupt_handler(int _) {
+    (void) _;
+    is_interrupted = true;
+}
+
 static struct option long_options[] = {
         {"show_audio_devices", no_argument,       NULL, 's'},
         {"input_wav_path",     required_argument, NULL, 'i'},
-        {"audio_device_index", required_argument, NULL, 'd'}
+        {"audio_device_index", required_argument, NULL, 'd'},
+        {"buffer_size_secs",   required_argument, NULL, 'b'}
 };
 
 static void print_usage(const char *program_name) {
     fprintf(stderr,
-            "Usage : %s -i INPUT_WAV_PATH [-d AUDIO_DEVICE_INDEX]\n"
+            "Usage : %s -i INPUT_WAV_PATH [-d AUDIO_DEVICE_INDEX] [-b BUFFER_SIZE_SECS]\n"
             "        %s --show_audio_devices\n",
             program_name,
             program_name);
@@ -123,9 +130,10 @@ void *read_wav_file(const char *filename, uint32_t *num_samples, uint32_t *sampl
 int main(int argc, char *argv[]) {
     const char *input_wav_path = NULL;
     int32_t device_index = -1;
+    int32_t buffer_size_secs = 20;
 
     int c;
-    while ((c = getopt_long(argc, argv, "si:d:", long_options, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, "si:d:b:", long_options, NULL)) != -1) {
         switch (c) {
             case 's':
                 show_audio_devices();
@@ -135,6 +143,9 @@ int main(int argc, char *argv[]) {
                 break;
             case 'd':
                 device_index = (int32_t) strtol(optarg, NULL, 10);
+                break;
+            case 'b':
+                buffer_size_secs = (int32_t) strtol(optarg, NULL, 10);
                 break;
             default:
                 exit(1);
@@ -146,6 +157,7 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
 
+    signal(SIGINT, interrupt_handler);
     fprintf(stdout, "pv_speaker version: %s\n", pv_speaker_version());
 
     uint32_t num_samples, sample_rate;
@@ -153,7 +165,6 @@ int main(int argc, char *argv[]) {
     void *pcm_data = read_wav_file(input_wav_path, &num_samples, &sample_rate, &bits_per_sample);
 
     fprintf(stdout, "Initializing pv_speaker...\n");
-    const int32_t buffer_size_secs = 20;
     pv_speaker_t *speaker = NULL;
     pv_speaker_status_t status = pv_speaker_init(
             sample_rate,
@@ -178,19 +189,39 @@ int main(int argc, char *argv[]) {
     fprintf(stdout, "Playing audio...\n");
     if (pcm_data) {
         int8_t *pcm = (int8_t *) pcm_data;
-        status = pv_speaker_write(speaker, pcm, num_samples);
-        if (status != PV_SPEAKER_STATUS_SUCCESS) {
-            fprintf(stderr, "Failed to write with %s.\n", pv_speaker_status_to_string(status));
-            exit(1);
+        int32_t total_written_length = 0;
+
+        while (!is_interrupted && total_written_length < num_samples) {
+            int32_t written_length = 0;
+            status = pv_speaker_write(
+                    speaker,
+                    &pcm[total_written_length * bits_per_sample / 8],
+                    num_samples - total_written_length,
+                    &written_length);
+            if (status != PV_SPEAKER_STATUS_SUCCESS) {
+                fprintf(stderr, "Failed to write with %s.\n", pv_speaker_status_to_string(status));
+                exit(1);
+            }
+            total_written_length += written_length;
         }
 
         free(pcm);
     }
 
-    status = pv_speaker_flush(speaker);
-    if (status != PV_SPEAKER_STATUS_SUCCESS) {
-        fprintf(stderr, "Failed to flush pcm with %s.\n", pv_speaker_status_to_string(status));
-        exit(1);
+    if (is_interrupted) {
+        fprintf(stdout, "\nStopped audio...\n");
+    } else {
+        fprintf(stdout, "Waiting for audio to finish...\n");
+        int32_t pcm_length = 0;
+        int16_t pcm[pcm_length];
+        int8_t *pcm_ptr = (int8_t *) pcm;
+        int32_t written_length = 0;
+        status = pv_speaker_flush(speaker, pcm_ptr, pcm_length, &written_length);
+        if (status != PV_SPEAKER_STATUS_SUCCESS) {
+            fprintf(stderr, "Failed to flush pcm with %s.\n", pv_speaker_status_to_string(status));
+            exit(1);
+        }
+        fprintf(stdout, "Finished playing audio...\n");
     }
 
     status = pv_speaker_stop(speaker);

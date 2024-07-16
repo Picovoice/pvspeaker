@@ -62,7 +62,7 @@ With a working speaker connected to your device run the following in the termina
 pv_speaker_demo --input_wav_path {INPUT_WAV_PATH}
 ```
 
-Replace `{INPUT_WAV_PATH}` with the path to the pcm `wav` file you wish to play.
+Replace `{INPUT_WAV_PATH}` with the path to the PCM WAV file you wish to play.
 
 For more information about the Python demos go to [demo/python](demo/python).
 
@@ -89,7 +89,7 @@ Play from a single-channel PCM WAV file with a given audio device index:
 ./pv_speaker_demo -i test.wav -d 2
 ```
 
-Hit `Ctrl+C` if you wish to stop audio playback before it completes. If no audio device index (`-d`) is provided, the demo will use the system's default audio player device.
+Hit `Ctrl+C` if you wish to stop writing PCM data before it completes. If no audio device index (`-d`) is provided, the demo will use the system's default audio player device.
 
 For more information about the C demo, go to [demo/c](demo/c).
 
@@ -119,13 +119,13 @@ def get_next_audio_frame():
 speaker.write(get_next_audio_frame())
 ```
 
-When all frames have been written, run `flush()` to wait for all buffered pcm data to be played:
+When all frames have been written, run `flush()` to wait for all buffered PCM data to be played:
 
 ```python
 speaker.flush()
 ```
 
-Once you are done writing pcm, run `stop()` on the instance:
+Once you are done writing PCM, run `stop()` on the instance:
 
 ```python
 speaker.stop()

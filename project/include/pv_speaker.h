@@ -17,11 +17,11 @@
 
 #if __PV_PLATFORM_WINDOWS__
 
-#define PV_API __attribute__ ((dllexport))
+#define PV_API __attribute__((dllexport))
 
 #else
 
-#define PV_API __attribute__((visibility ("default")))
+#define PV_API __attribute__((visibility("default")))
 
 #endif
 
@@ -51,7 +51,7 @@ typedef enum {
 *
 * @param sample_rate The sample rate of the audio to be played.
 * @param bits_per_sample The number of bits per sample.
-* @param buffer_size_secs The size in seconds of the internal buffer used to buffer pcm data
+* @param buffer_size_secs The size in seconds of the internal buffer used to buffer PCM data
 * - i.e. internal circular buffer will be of size `sample_rate` * `buffer_size_secs`.
 * @param device_index The index of the audio device to use. A value of (-1) will resort to default device.
 * @param[out] object PvSpeaker object to be initialized.
@@ -73,7 +73,8 @@ PV_API pv_speaker_status_t pv_speaker_init(
 PV_API void pv_speaker_delete(pv_speaker_t *object);
 
 /**
-* Starts the audio output device. After starting, pcm data can be sent to the audio output device via `pv_speaker_write`.
+* Starts the audio output device. After starting, PCM data can be sent to the audio output device via `pv_speaker_write`
+* and/or `pv_speaker_flush`.
 *
 * @param object PvSpeaker object.
 * @returnStatus Status Code. Returns PV_SPEAKER_STATUS_INVALID_ARGUMENT, PV_SPEAKER_STATUS_DEVICE_NOT_INITIALIZED
@@ -82,22 +83,32 @@ PV_API void pv_speaker_delete(pv_speaker_t *object);
 PV_API pv_speaker_status_t pv_speaker_start(pv_speaker_t *object);
 
 /**
-* Synchronous call to write pcm data.
+* Synchronous call to write PCM data to the internal circular buffer for audio playback.
+* Only writes as much PCM data as the internal circular buffer can currently fit.
 *
 * @param object PvSpeaker object.
-* @param pcm Pointer to the pcm data that will be written.
-* @param pcm_length Length of the pcm data that is passed in.
-* @return Status Code. Returns PV_SPEAKER_STATUS_INVALID_ARGUMENT, PV_SPEAKER_INVALID_STATE or PV_SPEAKER_IO_ERROR on failure.
+* @param pcm Pointer to the PCM data that will be written.
+* @param pcm_length Length of the PCM data that is passed in.
+* @param written_length[out] Length of the PCM data that was successfully written. This value may be less than or equal
+* to `pcm_length`, depending on the current state of the internal circular buffer.
+* @return Status Code. Returns PV_SPEAKER_STATUS_INVALID_ARGUMENT, PV_SPEAKER_INVALID_STATE or PV_SPEAKER_IO_ERROR on
+* failure.
 */
-PV_API pv_speaker_status_t pv_speaker_write(pv_speaker_t *object, int8_t *pcm, int32_t pcm_length);
+PV_API pv_speaker_status_t pv_speaker_write(pv_speaker_t *object, int8_t *pcm, int32_t pcm_length, int32_t *written_length);
 
 /**
-* Waits for buffered pcm data to be played.
+* Synchronous call to write PCM data to the internal circular buffer for audio playback.
+* This call blocks the thread until all PCM data have been successfully written and played.
 *
 * @param object PvSpeaker object.
-* @return Status Code. Returns PV_SPEAKER_STATUS_INVALID_ARGUMENT or PV_SPEAKER_STATUS_INVALID_STATE on failure.
+* @param pcm Pointer to the PCM data that will be written.
+* @param pcm_length Length of the PCM data that is passed in.
+* @param written_length[out] Length of the PCM data that was successfully written. This value should always match
+* `pcm_length`, unless an error occurred.
+* @return Status Code. Returns PV_SPEAKER_STATUS_INVALID_ARGUMENT, PV_SPEAKER_INVALID_STATE or PV_SPEAKER_IO_ERROR on
+* failure.
 */
-PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object);
+PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object, int8_t *pcm, int32_t pcm_length, int32_t *written_length);
 
 /**
 * Stops the device.
@@ -108,10 +119,10 @@ PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object);
 PV_API pv_speaker_status_t pv_speaker_stop(pv_speaker_t *object);
 
 /**
-* Gets whether the given `pv_speaker_t` instance has started and available to receive pcm frames or not.
+* Gets whether the given `pv_speaker_t` instance has started and is available to receive PCM data.
 *
 * @param object PvSpeaker object.
-* @returns A boolean indicating whether PvSpeaker has started and available to receive pcm frames or not.
+* @returns A boolean indicating whether PvSpeaker has started and is available to receive PCM data.
 */
 PV_API bool pv_speaker_get_is_started(pv_speaker_t *object);
 

@@ -126,17 +126,17 @@ class PvSpeaker(object):
         self._start_func.argtypes = [POINTER(self.CPvSpeaker)]
         self._start_func.restype = self.PvSpeakerStatuses
 
-        self._flush_func = library.pv_speaker_flush
-        self._flush_func.argtypes = [POINTER(self.CPvSpeaker)]
-        self._flush_func.restype = self.PvSpeakerStatuses
-
         self._stop_func = library.pv_speaker_stop
         self._stop_func.argtypes = [POINTER(self.CPvSpeaker)]
         self._stop_func.restype = self.PvSpeakerStatuses
 
         self._write_func = library.pv_speaker_write
-        self._write_func.argtypes = [POINTER(self.CPvSpeaker), c_char_p, c_int32]
+        self._write_func.argtypes = [POINTER(self.CPvSpeaker), c_char_p, c_int32, POINTER(c_int32)]
         self._write_func.restype = self.PvSpeakerStatuses
+
+        self._flush_func = library.pv_speaker_flush
+        self._flush_func.argtypes = [POINTER(self.CPvSpeaker), c_char_p, c_int32, POINTER(c_int32)]
+        self._flush_func.restype = self.PvSpeakerStatuses
 
         self._get_is_started_func = library.pv_speaker_get_is_started
         self._get_is_started_func.argtypes = [POINTER(self.CPvSpeaker)]
@@ -169,16 +169,7 @@ class PvSpeaker(object):
         if status is not self.PvSpeakerStatuses.SUCCESS:
             raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to stop device.")
 
-    def flush(self) -> None:
-        """Waits for buffered pcm data to be played."""
-
-        status = self._flush_func(self._handle)
-        if status is not self.PvSpeakerStatuses.SUCCESS:
-            raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to flush buffered pcm.")
-
-    def write(self, pcm) -> None:
-        """Synchronous call to write pcm data to selected device for audio playback."""
-
+    def _pcm_to_bytes(self, pcm) -> bytes:
         byte_data = None
         if self._bits_per_sample == 8:
             byte_data = pack('B' * len(pcm), *pcm)
@@ -188,10 +179,35 @@ class PvSpeaker(object):
             byte_data = b''.join(pack('<i', sample)[0:3] for sample in pcm)
         elif self._bits_per_sample == 32:
             byte_data = pack('i' * len(pcm), *pcm)
+        return byte_data
 
-        status = self._write_func(self._handle, c_char_p(byte_data), c_int32(len(pcm)))
+    def write(self, pcm) -> int:
+        """
+        Synchronous call to write PCM data to the internal circular buffer for audio playback.
+        Only writes as much PCM data as the internal circular buffer can currently fit, and
+        returns the length of the PCM data that was successfully written.
+        """
+
+        written_length = c_int32()
+        status = self._write_func(self._handle, c_char_p(self._pcm_to_bytes(pcm)), c_int32(len(pcm)), byref(written_length))
         if status is not self.PvSpeakerStatuses.SUCCESS:
             raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to write to device.")
+
+        return written_length.value
+
+    def flush(self, pcm=[]) -> int:
+        """
+        Synchronous call to write PCM data to the internal circular buffer for audio playback.
+        This call blocks the thread until all PCM data has been successfully written and played.
+        """
+
+        written_length = c_int32()
+        status = self._flush_func(
+            self._handle, c_char_p(self._pcm_to_bytes(pcm)), c_int32(len(pcm)), byref(written_length))
+        if status is not self.PvSpeakerStatuses.SUCCESS:
+            raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to write to device.")
+
+        return written_length.value
 
     @property
     def is_started(self) -> bool:

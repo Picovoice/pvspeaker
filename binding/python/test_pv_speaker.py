@@ -43,12 +43,31 @@ class PvSpeakerTestCase(unittest.TestCase):
             speaker.start()
             pcm = [0] * (512 * 2)
             speaker.write(pcm)
+            speaker.flush(pcm)
             speaker.flush()
             speaker.stop()
             speaker.delete()
         except ValueError or IOError:
             error = True
         self.assertFalse(error)
+
+    def test_write_flow(self):
+        sample_rate = 16000
+        buffer_size_secs = 1
+        circular_buffer_size = sample_rate * buffer_size_secs
+        pcm = [0] * (circular_buffer_size + 1)
+
+        speaker = PvSpeaker(sample_rate, 16, buffer_size_secs)
+        speaker.start()
+
+        write_count = speaker.write(pcm)
+        self.assertEqual(write_count, circular_buffer_size)
+        write_count = speaker.flush(pcm)
+        self.assertEqual(write_count, len(pcm))
+        write_count = speaker.flush()
+        self.assertEqual(write_count, 0)
+
+        speaker.delete()
 
     def test_is_started(self):
         speaker = PvSpeaker(16000, 16, 20)
