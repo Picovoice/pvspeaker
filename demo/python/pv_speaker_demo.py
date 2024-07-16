@@ -20,6 +20,7 @@ from pvspeaker import PvSpeaker
 def split_list(input_list, x):
     return [input_list[i:i + x] for i in range(0, len(input_list), x)]
 
+
 def main():
     parser = argparse.ArgumentParser()
 

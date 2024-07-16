@@ -189,7 +189,8 @@ class PvSpeaker(object):
         """
 
         written_length = c_int32()
-        status = self._write_func(self._handle, c_char_p(self._pcm_to_bytes(pcm)), c_int32(len(pcm)), byref(written_length))
+        status = self._write_func(
+            self._handle, c_char_p(self._pcm_to_bytes(pcm)), c_int32(len(pcm)), byref(written_length))
         if status is not self.PvSpeakerStatuses.SUCCESS:
             raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to write to device.")
 
