@@ -29,6 +29,8 @@
 static bool is_flushed_and_empty = false;
 static bool is_data_requested_while_empty = false;
 
+static const int32_t FLUSH_SLEEP_MS = 2;
+
 struct pv_speaker {
     ma_context context;
     ma_device device;
@@ -318,11 +320,13 @@ PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object, int8_t *pcm, i
         }
 
         ma_mutex_unlock(&object->mutex);
+        ma_sleep(FLUSH_SLEEP_MS);
     }
 
     // waits for all frames to be copied to output buffer
     while (!is_flushed_and_empty || !is_data_requested_while_empty) {
         ma_mutex_lock(&object->mutex);
+
         int32_t count = 0;
         pv_circular_buffer_status_t status = pv_circular_buffer_get_count(object->buffer, &count);
         if (status == PV_CIRCULAR_BUFFER_STATUS_SUCCESS && count == 0) {
@@ -331,7 +335,9 @@ PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object, int8_t *pcm, i
             ma_mutex_unlock(&object->mutex);
             return PV_SPEAKER_STATUS_RUNTIME_ERROR;
         }
+
         ma_mutex_unlock(&object->mutex);
+        ma_sleep(FLUSH_SLEEP_MS);
     }
 
     return PV_SPEAKER_STATUS_SUCCESS;
