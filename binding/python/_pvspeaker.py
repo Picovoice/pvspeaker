@@ -138,6 +138,10 @@ class PvSpeaker(object):
         self._flush_func.argtypes = [POINTER(self.CPvSpeaker), c_char_p, c_int32, POINTER(c_int32)]
         self._flush_func.restype = self.PvSpeakerStatuses
 
+        self._stop_flush_func = library.pv_speaker_stop_flush
+        self._stop_flush_func.argtypes = None
+        self._stop_flush_func.restype = None
+
         self._get_is_started_func = library.pv_speaker_get_is_started
         self._get_is_started_func.argtypes = [POINTER(self.CPvSpeaker)]
         self._get_is_started_func.restype = c_bool
@@ -211,6 +215,11 @@ class PvSpeaker(object):
             raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to write to device.")
 
         return written_length.value
+
+    def stop_flush(self) -> None:
+        """Escape mechanism to stop the execution of `flush` before it completes."""
+
+        self._stop_flush_func()
 
     @property
     def is_started(self) -> bool:

@@ -89,7 +89,7 @@ Play from a single-channel PCM WAV file with a given audio device index:
 ./pv_speaker_demo -i test.wav -d 2
 ```
 
-Hit `Ctrl+C` if you wish to stop writing PCM data before it completes. If no audio device index (`-d`) is provided, the demo will use the system's default audio player device.
+Hit `Ctrl+C` if you wish to stop playing audio before it completes. If no audio device index (`-d`) is provided, the demo will use the system's default audio player device.
 
 For more information about the C demo, go to [demo/c](demo/c).
 
@@ -125,13 +125,21 @@ When all frames have been written, run `flush()` to wait for all buffered PCM da
 speaker.flush()
 ```
 
+If you wish to stop playing audio before it completes, run `stop_flush`:
+
+```python
+speaker.stop_flush()
+```
+
+Note that this function will have to be called in a separate thread.
+
 Once you are done writing PCM, run `stop()` on the instance:
 
 ```python
 speaker.stop()
 ```
 
-Once you are done completely, free the resources acquired by PvSpeaker. You do not have to call `stop()` before `delete()`:
+Once you are done playing audio (i.e. `flush` has completed or `stop_flush` has been called), free the resources acquired by PvSpeaker. You do not have to call `stop()` before `delete()`:
 
 ```python
 speaker.delete()

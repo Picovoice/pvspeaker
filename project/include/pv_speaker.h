@@ -111,6 +111,12 @@ PV_API pv_speaker_status_t pv_speaker_write(pv_speaker_t *object, int8_t *pcm, i
 PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object, int8_t *pcm, int32_t pcm_length, int32_t *written_length);
 
 /**
+* Escape mechanism to stop the execution of `pv_speaker_flush` before it completes.
+*
+*/
+PV_API void pv_speaker_stop_flush();
+
+/**
 * Stops the device.
 *
 * @param object PvSpeaker object.

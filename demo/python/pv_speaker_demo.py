@@ -14,7 +14,18 @@ import argparse
 import wave
 import array
 
+import threading
+
 from pvspeaker import PvSpeaker
+
+
+def blocking_call(speaker):
+    speaker.flush()
+
+
+def worker_function(speaker, completion_event):
+    blocking_call(speaker)
+    completion_event.set()
 
 
 def split_list(input_list, x):
@@ -118,15 +129,23 @@ def main():
                         total_written_length += written_length
 
                 print("Waiting for audio to finish...")
-                speaker.flush()
+
+                completion_event = threading.Event()
+                worker_thread = threading.Thread(target=worker_function, args=(speaker, completion_event))
+                worker_thread.start()
+                completion_event.wait()
+                worker_thread.join()
+
                 speaker.stop()
 
                 print("Finished playing audio...")
                 wavfile.close()
 
         except KeyboardInterrupt:
-            print("\nStopping...")
+            speaker.stop_flush()
+            print("\nStopped...")
         finally:
+            print("Deleting PvSpeaker...")
             if speaker is not None:
                 speaker.delete()
             if wavfile is not None:

@@ -23,6 +23,8 @@ static volatile bool is_interrupted = false;
 void interrupt_handler(int _) {
     (void) _;
     is_interrupted = true;
+    pv_speaker_stop_flush();
+    fprintf(stdout, "\nStopped...\n");
 }
 
 static struct option long_options[] = {
@@ -208,19 +210,18 @@ int main(int argc, char *argv[]) {
         free(pcm);
     }
 
-    if (is_interrupted) {
-        fprintf(stdout, "\nStopped audio...\n");
-    } else {
-        fprintf(stdout, "Waiting for audio to finish...\n");
-        int32_t pcm_length = 0;
-        int16_t pcm[pcm_length];
-        int8_t *pcm_ptr = (int8_t *) pcm;
-        int32_t written_length = 0;
-        status = pv_speaker_flush(speaker, pcm_ptr, pcm_length, &written_length);
-        if (status != PV_SPEAKER_STATUS_SUCCESS) {
-            fprintf(stderr, "Failed to flush pcm with %s.\n", pv_speaker_status_to_string(status));
-            exit(1);
-        }
+    fprintf(stdout, "Waiting for audio to finish...\n");
+    int32_t pcm_length = 0;
+    int16_t pcm[pcm_length];
+    int8_t *pcm_ptr = (int8_t *) pcm;
+    int32_t written_length = 0;
+    status = pv_speaker_flush(speaker, pcm_ptr, pcm_length, &written_length);
+    if (status != PV_SPEAKER_STATUS_SUCCESS) {
+        fprintf(stderr, "Failed to flush pcm with %s.\n", pv_speaker_status_to_string(status));
+        exit(1);
+    }
+
+    if (!is_interrupted) {
         fprintf(stdout, "Finished playing audio...\n");
     }
 

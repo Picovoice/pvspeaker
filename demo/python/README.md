@@ -35,4 +35,4 @@ To run PvSpeaker run:
 pv_speaker_demo --audio_device_index {AUDIO_DEVICE_INDEX} --input_wav_path {INPUT_WAV_PATH}
 ```
 
-Hit `Ctrl+C` if you wish to stop writing PCM data before it completes. If no audio device index (`-d`) is provided, the demo will use the system's default audio player device.
+Hit `Ctrl+C` if you wish to stop playing audio before it completes. If no audio device index (`-d`) is provided, the demo will use the system's default audio player device.
