@@ -13,8 +13,9 @@
 #include "test_helper.h"
 
 static void test_pv_circular_buffer_once(void) {
+    int32_t element_count = 128;
     pv_circular_buffer_t *cb;
-    pv_circular_buffer_status_t status = pv_circular_buffer_init(128, sizeof(int16_t), &cb);
+    pv_circular_buffer_status_t status = pv_circular_buffer_init(element_count, sizeof(int16_t), &cb);
     check_condition(
             status == PV_CIRCULAR_BUFFER_STATUS_SUCCESS,
             __FUNCTION__,
@@ -30,6 +31,14 @@ static void test_pv_circular_buffer_once(void) {
 
     status = pv_circular_buffer_write(cb, in_buffer, in_size);
     check_condition(status == PV_CIRCULAR_BUFFER_STATUS_SUCCESS, __FUNCTION__, __LINE__, "Failed to write buffer.");
+
+    int32_t available = 0;
+    status = pv_circular_buffer_get_available(cb, &available);
+    check_condition(
+            (status == PV_CIRCULAR_BUFFER_STATUS_SUCCESS && available == (element_count - in_size)),
+            __FUNCTION__,
+            __LINE__,
+            "Failed to get correct amount of available space before write.");
 
     int32_t count = 0;
     status = pv_circular_buffer_get_count(cb, &count);

@@ -14,7 +14,22 @@ import argparse
 import wave
 import array
 
+import threading
+
 from pvspeaker import PvSpeaker
+
+
+def blocking_call(speaker):
+    speaker.flush()
+
+
+def worker_function(speaker, completion_event):
+    blocking_call(speaker)
+    completion_event.set()
+
+
+def split_list(input_list, x):
+    return [input_list[i:i + x] for i in range(0, len(input_list), x)]
 
 
 def main():
@@ -22,19 +37,29 @@ def main():
 
     parser.add_argument(
         "--show_audio_devices",
+        "-s",
         help="List of audio devices currently available for use.",
         action="store_true")
 
     parser.add_argument(
         "--audio_device_index",
+        "-d",
         help="Index of input audio device.",
         type=int,
         default=-1)
 
     parser.add_argument(
         "--input_wav_path",
+        "-i",
         help="Path to PCM WAV file to be played.",
         default=None)
+
+    parser.add_argument(
+        "--buffer_size_secs",
+        "-b",
+        help="Size of internal PCM buffer in seconds.",
+        type=int,
+        default=20)
 
     args = parser.parse_args()
 
@@ -45,6 +70,7 @@ def main():
     else:
         device_index = args.audio_device_index
         input_path = args.input_wav_path
+        buffer_size_secs = args.buffer_size_secs
 
         wavfile = None
         speaker = None
@@ -71,6 +97,7 @@ def main():
                 speaker = PvSpeaker(
                     sample_rate=sample_rate,
                     bits_per_sample=bits_per_sample,
+                    buffer_size_secs=buffer_size_secs,
                     device_index=device_index)
                 print("pvspeaker version: %s" % speaker.version)
                 print("Using device: %s" % speaker.selected_device)
@@ -90,18 +117,35 @@ def main():
                 elif bits_per_sample == 32:
                     pcm = list(array.array('i', wav_bytes))
 
+                pcm_list = split_list(pcm, sample_rate)
                 speaker.start()
 
                 print("Playing audio...")
-                speaker.write(pcm)
+                for pcm_sublist in pcm_list:
+                    sublist_length = len(pcm_sublist)
+                    total_written_length = 0
+                    while total_written_length < sublist_length:
+                        written_length = speaker.write(pcm_sublist[total_written_length:])
+                        total_written_length += written_length
+
+                print("Waiting for audio to finish...")
+
+                completion_event = threading.Event()
+                worker_thread = threading.Thread(target=worker_function, args=(speaker, completion_event))
+                worker_thread.start()
+                completion_event.wait()
+                worker_thread.join()
+
                 speaker.stop()
 
                 print("Finished playing audio...")
                 wavfile.close()
 
         except KeyboardInterrupt:
-            print("Stopping...")
+            speaker.stop()
+            print("\nStopped...")
         finally:
+            print("Deleting PvSpeaker...")
             if speaker is not None:
                 speaker.delete()
             if wavfile is not None:

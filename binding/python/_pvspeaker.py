@@ -57,7 +57,6 @@ class PvSpeaker(object):
         OUT_OF_MEMORY = 1
         INVALID_ARGUMENT = 2
         INVALID_STATE = 3
-        BUFFER_OVERFLOW = 3
         BACKEND_ERROR = 4
         DEVICE_ALREADY_INITIALIZED = 5
         DEVICE_NOT_INITIALIZED = 6
@@ -68,7 +67,6 @@ class PvSpeaker(object):
         PvSpeakerStatuses.OUT_OF_MEMORY: MemoryError,
         PvSpeakerStatuses.INVALID_ARGUMENT: ValueError,
         PvSpeakerStatuses.INVALID_STATE: ValueError,
-        PvSpeakerStatuses.BUFFER_OVERFLOW: IOError,
         PvSpeakerStatuses.BACKEND_ERROR: SystemError,
         PvSpeakerStatuses.DEVICE_ALREADY_INITIALIZED: ValueError,
         PvSpeakerStatuses.DEVICE_NOT_INITIALIZED: ValueError,
@@ -86,19 +84,16 @@ class PvSpeaker(object):
             self,
             sample_rate: int,
             bits_per_sample: int,
-            device_index: int = -1,
-            frame_length: int = 512,
-            buffered_frames_count: int = 50):
+            buffer_size_secs: int = 20,
+            device_index: int = -1):
         """
         Constructor
 
         :param sample_rate: The sample rate of the audio to be played.
         :param bits_per_sample: The number of bits per sample.
+        :param buffer_size_secs: The size in seconds of the internal buffer used to buffer pcm data
+        - i.e. internal circular buffer will be of size `sample_rate` * `buffer_size_secs`.
         :param device_index: The index of the audio device to use. A value of (-1) will resort to default device.
-        :param frame_length: The maximum length of audio frame that will be passed to each write call.
-        :param buffered_frames_count: The number of audio frames buffered internally for writing - i.e. internal
-        circular buffer will be of size `frame_length` * `buffered_frames_count`. If this value is too low,
-        buffer overflows could occur audio frames could be dropped. A higher value will increase memory usage.
         """
 
         library = self._get_library()
@@ -109,18 +104,17 @@ class PvSpeaker(object):
             c_int32,
             c_int32,
             c_int32,
-            c_int32,
             POINTER(POINTER(self.CPvSpeaker))
         ]
         init_func.restype = self.PvSpeakerStatuses
 
         self._handle = POINTER(self.CPvSpeaker)()
         self._sample_rate = sample_rate
-        self._frame_length = frame_length
         self._bits_per_sample = bits_per_sample
+        self._buffer_size_secs = buffer_size_secs
 
         status = init_func(
-            sample_rate, frame_length, bits_per_sample, device_index, buffered_frames_count, byref(self._handle))
+            sample_rate, bits_per_sample, buffer_size_secs, device_index, byref(self._handle))
         if status is not self.PvSpeakerStatuses.SUCCESS:
             raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to initialize PvSpeaker.")
 
@@ -136,13 +130,13 @@ class PvSpeaker(object):
         self._stop_func.argtypes = [POINTER(self.CPvSpeaker)]
         self._stop_func.restype = self.PvSpeakerStatuses
 
-        self._set_debug_logging_func = library.pv_speaker_set_debug_logging
-        self._set_debug_logging_func.argtypes = [POINTER(self.CPvSpeaker), c_bool]
-        self._set_debug_logging_func.restype = None
-
         self._write_func = library.pv_speaker_write
-        self._write_func.argtypes = [POINTER(self.CPvSpeaker), c_int32, c_void_p]
+        self._write_func.argtypes = [POINTER(self.CPvSpeaker), c_char_p, c_int32, POINTER(c_int32)]
         self._write_func.restype = self.PvSpeakerStatuses
+
+        self._flush_func = library.pv_speaker_flush
+        self._flush_func.argtypes = [POINTER(self.CPvSpeaker), c_char_p, c_int32, POINTER(c_int32)]
+        self._flush_func.restype = self.PvSpeakerStatuses
 
         self._get_is_started_func = library.pv_speaker_get_is_started
         self._get_is_started_func.argtypes = [POINTER(self.CPvSpeaker)]
@@ -169,49 +163,54 @@ class PvSpeaker(object):
             raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to start device.")
 
     def stop(self) -> None:
-        """Stops playing audio."""
+        """Stops the device."""
 
         status = self._stop_func(self._handle)
         if status is not self.PvSpeakerStatuses.SUCCESS:
             raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to stop device.")
 
-    def write(self, pcm) -> None:
-        """Synchronous call to write pcm frames to selected device for audio playback."""
+    def _pcm_to_bytes(self, pcm) -> bytes:
+        byte_data = None
+        if self._bits_per_sample == 8:
+            byte_data = pack('B' * len(pcm), *pcm)
+        elif self._bits_per_sample == 16:
+            byte_data = pack('h' * len(pcm), *pcm)
+        elif self._bits_per_sample == 24:
+            byte_data = b''.join(pack('<i', sample)[0:3] for sample in pcm)
+        elif self._bits_per_sample == 32:
+            byte_data = pack('i' * len(pcm), *pcm)
+        return byte_data
 
-        i = 0
-        while i < len(pcm):
-            is_last_frame = i + self._frame_length >= len(pcm)
-            write_frame_length = len(pcm) - i if is_last_frame else self._frame_length
-
-            start_index = i
-            end_index = i + write_frame_length
-            frame = pcm[start_index:end_index]
-
-            byte_data = None
-            if self._bits_per_sample == 8:
-                byte_data = pack('B' * len(frame), *frame)
-            elif self._bits_per_sample == 16:
-                byte_data = pack('h' * len(frame), *frame)
-            elif self._bits_per_sample == 24:
-                byte_data = b''.join(pack('<i', sample)[0:3] for sample in frame)
-            elif self._bits_per_sample == 32:
-                byte_data = pack('i' * len(frame), *frame)
-
-            status = self._write_func(self._handle, c_int32(len(frame)), c_char_p(byte_data))
-            if status is not self.PvSpeakerStatuses.SUCCESS:
-                raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to write to device.")
-
-            i += self._frame_length
-
-    def set_debug_logging(self, is_debug_logging_enabled: bool) -> None:
+    def write(self, pcm) -> int:
         """
-        Enable or disable debug logging for PvSpeaker. Debug logs will indicate when there are overflows
-        in the internal frame buffer.
-
-        :param is_debug_logging_enabled: Boolean indicating whether the debug logging is enabled or disabled.
+        Synchronous call to write PCM data to the internal circular buffer for audio playback.
+        Only writes as much PCM data as the internal circular buffer can currently fit, and
+        returns the length of the PCM data that was successfully written.
         """
 
-        self._set_debug_logging_func(self._handle, is_debug_logging_enabled)
+        written_length = c_int32()
+        status = self._write_func(
+            self._handle, c_char_p(self._pcm_to_bytes(pcm)), c_int32(len(pcm)), byref(written_length))
+        if status is not self.PvSpeakerStatuses.SUCCESS:
+            raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to write to device.")
+
+        return written_length.value
+
+    def flush(self, pcm=None) -> int:
+        """
+        Synchronous call to write PCM data to the internal circular buffer for audio playback.
+        This call blocks the thread until all PCM data has been successfully written and played.
+        """
+
+        if pcm is None:
+            pcm = []
+        written_length = c_int32()
+        status = self._flush_func(
+            self._handle, c_char_p(self._pcm_to_bytes(pcm)), c_int32(len(pcm)), byref(written_length))
+        if status is not self.PvSpeakerStatuses.SUCCESS:
+            raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to write to device.")
+
+        return written_length.value
 
     @property
     def is_started(self) -> bool:
@@ -240,16 +239,16 @@ class PvSpeaker(object):
         return self._sample_rate
 
     @property
-    def frame_length(self) -> int:
-        """Gets the frame length matching the value given to `__init__()`."""
-
-        return self._frame_length
-
-    @property
     def bits_per_sample(self) -> int:
         """Gets the bits per sample matching the value given to `__init__()`."""
 
         return self._bits_per_sample
+
+    @property
+    def buffer_size_secs(self) -> int:
+        """Gets the buffer size in seconds matching the value given to `__init__()`."""
+
+        return self._buffer_size_secs
 
     @staticmethod
     def get_available_devices() -> List[str]:

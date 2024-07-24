@@ -32,22 +32,21 @@ to get a list of possible values.
 ## Usage
 
 1. Create a PvSpeaker object:
+
 ```c
 #include "pv_speaker.h"
 
 const int32_t sample_rate = 22050;
-const int32_t frame_length = 512;
 const int16_t bits_per_sample = 16;
+const int32_t buffer_size_secs = 20;
 const int32_t device_index = -1; // -1 == default device
-const int32_t buffered_frame_count = 10;
 
 pv_speaker_t *speaker = NULL;
 pv_speaker_status_t status = pv_speaker_init(
         sample_rate,
-        frame_length,
         bits_per_sample,
+        buffer_size_secs,
         device_index,
-        buffered_frame_count,
         &speaker);
 if (status != PV_SPEAKER_STATUS_SUCCESS) {
     // handle PvSpeaker init error
@@ -63,29 +62,33 @@ if (status != PV_SPEAKER_STATUS_SUCCESS) {
 }
 ```
 
-3. Write frames of audio to the speaker:
+3. Write PCM data to the speaker:
+
 ```c
-if (pcm) {
-    for (int i = 0; i < num_samples; i += frame_length) {
-        // must have length equal to or less than `frame_length` that was given to `pv_speaker_init()`
-        // be sure to handle the last frame properly (i.e. the last frame will likely not have length `frame_length`)
-        bool is_last_frame = i + frame_length >= num_samples;
-        int32_t last_frame_length = num_samples - i;
+int32_3 num_samples;
+int8_t *pcm = get_pcm_data(&num_samples);
+int32_3 written_length = 0;
 
-        status = pv_speaker_write(
-                speaker,
-                is_last_frame ? last_frame_length : frame_length,
-                &pcm[i * bits_per_sample / 8]);
-        if (status != PV_SPEAKER_STATUS_SUCCESS) {
-            // handle PvSpeaker write error
-        }
-    }
-
-    free(pcm);
+pv_speaker_status_t status = pv_speaker_write(speaker, pcm, num_samples, &written_length);
+if (status != PV_SPEAKER_STATUS_SUCCESS) {
+    // handle PvSpeaker start error
 }
 ```
 
-4. Stop playing:
+4. Wait for buffered audio to finish playing:
+
+```c
+int32_3 num_samples;
+int8_t *pcm = get_pcm_data(&num_samples);
+int32_3 written_length = 0;
+
+pv_speaker_status_t status = pv_speaker_flush(speaker, pcm, num_samples, &written_length);
+if (status != PV_SPEAKER_STATUS_SUCCESS) {
+    // handle PvSpeaker flush error
+}
+```
+
+5. Stop the speaker:
 
 ```c
 pv_speaker_status_t status = pv_speaker_stop(speaker);
@@ -94,7 +97,8 @@ if (status != PV_SPEAKER_STATUS_SUCCESS) {
 }
 ```
 
-5. Release resources used by PvSpeaker:
+6. Release resources used by PvSpeaker:
+
 ```c
 pv_speaker_delete(speaker);
 ```

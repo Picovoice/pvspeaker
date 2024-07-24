@@ -16,20 +16,18 @@
 
 static void init_test_helper(
         int32_t sample_rate,
-        int32_t frame_length,
         int16_t bits_per_sample,
+        int32_t buffer_size_secs,
         int32_t device_index,
-        int32_t buffered_frames_count,
         pv_speaker_status_t expected_status) {
     pv_speaker_t *speaker = NULL;
     pv_speaker_status_t status;
 
     status = pv_speaker_init(
             sample_rate,
-            frame_length,
             bits_per_sample,
+            buffer_size_secs,
             device_index,
-            buffered_frames_count,
             &speaker);
 
     check_condition(
@@ -46,34 +44,28 @@ static void init_test_helper(
 
 static void test_pv_speaker_init(void) {
     printf("Initialize with valid parameters\n");
-    init_test_helper(16000, 512, 16, 0, 10, PV_SPEAKER_STATUS_SUCCESS);
+    init_test_helper(16000, 16, 20, 0, PV_SPEAKER_STATUS_SUCCESS);
 
     printf("Initialize with valid parameters (different sample rate)\n");
-    init_test_helper(22050, 512, 16, 0, 10, PV_SPEAKER_STATUS_SUCCESS);
-
-    printf("Initialize with valid parameters (different frame length)\n");
-    init_test_helper(16000, 256, 16, 0, 10, PV_SPEAKER_STATUS_SUCCESS);
+    init_test_helper(22050, 16, 20, 0, PV_SPEAKER_STATUS_SUCCESS);
 
     printf("Initialize with valid parameters (different bits per sample)\n");
-    init_test_helper(16000, 512, 8, 0, 10, PV_SPEAKER_STATUS_SUCCESS);
+    init_test_helper(16000, 8, 20, 0, PV_SPEAKER_STATUS_SUCCESS);
 
     printf("Initialize with invalid device index (negative)\n");
-    init_test_helper(16000, 512, 16, -2, 10, PV_SPEAKER_STATUS_INVALID_ARGUMENT);
+    init_test_helper(16000, 16, 20, -2, PV_SPEAKER_STATUS_INVALID_ARGUMENT);
 
     printf("Initialize with invalid device index (too high)\n");
-    init_test_helper(16000, 512, 16, 500, 10, PV_SPEAKER_STATUS_INVALID_ARGUMENT);
-
-    printf("Initialize with invalid frame length\n");
-    init_test_helper(16000, -1, 16, 0, 10, PV_SPEAKER_STATUS_INVALID_ARGUMENT);
+    init_test_helper(16000, 16, 20, 500, PV_SPEAKER_STATUS_INVALID_ARGUMENT);
 
     printf("Initialize with invalid bits per sample\n");
-    init_test_helper(16000, 512, -1, -2, 10, PV_SPEAKER_STATUS_INVALID_ARGUMENT);
+    init_test_helper(16000, -1, 20, 0, PV_SPEAKER_STATUS_INVALID_ARGUMENT);
 
-    printf("Initialize with invalid buffered frames count\n");
-    init_test_helper(16000, 512, 16, 0, 0, PV_SPEAKER_STATUS_INVALID_ARGUMENT);
+    printf("Initialize with invalid buffer size secs\n");
+    init_test_helper(16000, 16, 0, 20, PV_SPEAKER_STATUS_INVALID_ARGUMENT);
 
     printf("Initialize with null speaker pointer\n");
-    pv_speaker_status_t status = pv_speaker_init(16000, 512, 16, 0, 10, NULL);
+    pv_speaker_status_t status = pv_speaker_init(16000, 16, 20, 0, NULL);
     check_condition(
             status == PV_SPEAKER_STATUS_INVALID_ARGUMENT,
             __FUNCTION__,
@@ -86,11 +78,12 @@ static void test_pv_speaker_init(void) {
 static void test_pv_speaker_start_stop(void) {
     pv_speaker_t *speaker = NULL;
     pv_speaker_status_t status;
-    int32_t frame_length = 512;
-    int16_t frame[frame_length];
-    char *frame_ptr = (char *) frame;
+    int32_t pcm_length = 512;
+    int16_t pcm[pcm_length];
+    int8_t *pcm_ptr = (int8_t *) pcm;
+    int32_t written_length = 0;
 
-    status = pv_speaker_init(16000, frame_length, 16, 0, 10, &speaker);
+    status = pv_speaker_init(16000, 16, 20, 0, &speaker);
     check_condition(
             status == PV_SPEAKER_STATUS_SUCCESS,
             __FUNCTION__,
@@ -125,8 +118,8 @@ static void test_pv_speaker_start_stop(void) {
             pv_speaker_status_to_string(status),
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT));
 
-    printf("Call read before start object\n");
-    status = pv_speaker_write(speaker, frame_length, frame_ptr);
+    printf("Call write before start object\n");
+    status = pv_speaker_write(speaker, pcm_ptr, pcm_length, &written_length);
     check_condition(
             status == PV_SPEAKER_STATUS_INVALID_STATE,
             __FUNCTION__,
@@ -146,7 +139,7 @@ static void test_pv_speaker_start_stop(void) {
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
 
     printf("Call write on null speaker\n");
-    status = pv_speaker_write(NULL, frame_length, frame_ptr);
+    status = pv_speaker_write(NULL, pcm_ptr, pcm_length, &written_length);
     check_condition(
             status == PV_SPEAKER_STATUS_INVALID_ARGUMENT,
             __FUNCTION__,
@@ -155,8 +148,18 @@ static void test_pv_speaker_start_stop(void) {
             pv_speaker_status_to_string(status),
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT));
 
-    printf("Call write with null frame\n");
-    status = pv_speaker_write(speaker, frame_length, NULL);
+    printf("Call write with null pcm\n");
+    status = pv_speaker_write(speaker, NULL, pcm_length, &written_length);
+    check_condition(
+            status == PV_SPEAKER_STATUS_INVALID_ARGUMENT,
+            __FUNCTION__,
+            __LINE__,
+            "Speaker write returned %s - expected %s.",
+            pv_speaker_status_to_string(status),
+            pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT));
+
+    printf("Call write with null written length\n");
+    status = pv_speaker_write(speaker, pcm_ptr, pcm_length, NULL);
     check_condition(
             status == PV_SPEAKER_STATUS_INVALID_ARGUMENT,
             __FUNCTION__,
@@ -166,7 +169,7 @@ static void test_pv_speaker_start_stop(void) {
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT));
 
     printf("Call write with valid args\n");
-    status = pv_speaker_write(speaker, frame_length, frame_ptr);
+    status = pv_speaker_write(speaker, pcm_ptr, pcm_length, &written_length);
     check_condition(
             status == PV_SPEAKER_STATUS_SUCCESS,
             __FUNCTION__,
@@ -183,15 +186,35 @@ static void test_pv_speaker_start_stop(void) {
             __LINE__,
             "get_is_started returned false - expected true.");
 
-    printf("Call stop on null speaker object\n");
-    status = pv_speaker_stop(NULL);
+    printf("Call flush on null speaker\n");
+    status = pv_speaker_flush(NULL, pcm_ptr, pcm_length, &written_length);
     check_condition(
             status == PV_SPEAKER_STATUS_INVALID_ARGUMENT,
             __FUNCTION__,
             __LINE__,
-            "Speaker stop returned %s - expected %s.",
+            "Speaker flush returned %s - expected %s.",
             pv_speaker_status_to_string(status),
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT));
+
+    printf("Call flush with null pcm\n");
+    status = pv_speaker_flush(speaker, NULL, pcm_length, &written_length);
+    check_condition(
+            status == PV_SPEAKER_STATUS_INVALID_ARGUMENT,
+            __FUNCTION__,
+            __LINE__,
+            "Speaker flush returned %s - expected %s.",
+            pv_speaker_status_to_string(status),
+            pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT));
+
+    printf("Call flush with valid args\n");
+    status = pv_speaker_flush(speaker, pcm_ptr, pcm_length, &written_length);
+    check_condition(
+            status == PV_SPEAKER_STATUS_SUCCESS,
+            __FUNCTION__,
+            __LINE__,
+            "Speaker flush returned %s - expected %s.",
+            pv_speaker_status_to_string(status),
+            pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
 
     printf("Call stop on valid speaker object\n");
     status = pv_speaker_stop(speaker);
@@ -214,9 +237,18 @@ static void test_pv_speaker_start_stop(void) {
     pv_speaker_delete(speaker);
 }
 
-static void test_pv_speaker_set_debug_logging(void) {
+static void test_pv_speaker_write_flow(void) {
     pv_speaker_t *speaker = NULL;
-    pv_speaker_status_t status = pv_speaker_init(16000, 512, 16, 0, 10, &speaker);
+    pv_speaker_status_t status;
+    int32_t sample_rate = 16000;
+    int32_t buffer_size_secs = 1;
+    int32_t circular_buffer_size = sample_rate * buffer_size_secs;
+    int32_t pcm_length = circular_buffer_size + 1;
+    int16_t pcm[pcm_length];
+    int8_t *pcm_ptr = (int8_t *) pcm;
+    int32_t written_length = 0;
+
+    status = pv_speaker_init(sample_rate, 16, buffer_size_secs, 0, &speaker);
     check_condition(
             status == PV_SPEAKER_STATUS_SUCCESS,
             __FUNCTION__,
@@ -225,15 +257,33 @@ static void test_pv_speaker_set_debug_logging(void) {
             pv_speaker_status_to_string(status),
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
 
-    pv_speaker_set_debug_logging(NULL, true);
-    pv_speaker_set_debug_logging(speaker, true);
+    printf("Call write with pcm length greater than circular buffer's capacity/available space\n");
+    status = pv_speaker_write(speaker, pcm_ptr, pcm_length, &written_length);
+    check_condition(
+            (status == PV_SPEAKER_STATUS_SUCCESS && written_length == circular_buffer_size),
+            __FUNCTION__,
+            __LINE__,
+            "Speaker write returned %s - expected %s.",
+            pv_speaker_status_to_string(status),
+            pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
 
+    printf("Call flush with pcm length greater than circular buffer's capacity/available space\n");
+    status = pv_speaker_flush(speaker, pcm_ptr, pcm_length, &written_length);
+    check_condition(
+            (status == PV_SPEAKER_STATUS_SUCCESS && written_length == pcm_length),
+            __FUNCTION__,
+            __LINE__,
+            "Speaker flush returned %s - expected %s.",
+            pv_speaker_status_to_string(status),
+            pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
+
+    pv_speaker_stop(speaker);
     pv_speaker_delete(speaker);
 }
 
 static void test_pv_speaker_get_selected_device(void) {
     pv_speaker_t *speaker = NULL;
-    pv_speaker_status_t status = pv_speaker_init(16000, 512, 16, 0, 10, &speaker);
+    pv_speaker_status_t status = pv_speaker_init(16000, 16, 20, 0, &speaker);
     check_condition(
             status == PV_SPEAKER_STATUS_SUCCESS,
             __FUNCTION__,
@@ -319,7 +369,6 @@ int main() {
     test_pv_speaker_version();
     test_pv_speaker_init();
     test_pv_speaker_start_stop();
-    test_pv_speaker_set_debug_logging();
     test_pv_speaker_get_selected_device();
 
     return 0;

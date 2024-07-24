@@ -46,6 +46,14 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    # GitHub Actions runners do not have sound cards, so a virtual one must be created in order for unit tests to run.
+    - name: Install PulseAudio on Ubuntu
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pulseaudio
+        pulseaudio --check || pulseaudio --start
+        pactl load-module module-null-sink
+
     - name: Test
       run: python3 test_pv_speaker.py
 
@@ -60,6 +68,19 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: recursive
+
+    - name: Install PulseAudio
+      if: matrix.machine == 'rpi3-32' ||
+          matrix.machine == 'rpi3-64' ||
+          matrix.machine == 'rpi4-32' ||
+          matrix.machine == 'rpi4-64' ||
+          matrix.machine == 'rpi5-32' ||
+          matrix.machine == 'rpi5-64'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pulseaudio
+        pulseaudio --check || pulseaudio --start
+        pactl load-module module-null-sink
 
     - name: Test
       run: python3 test_pv_speaker.py

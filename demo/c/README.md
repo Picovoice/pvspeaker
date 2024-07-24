@@ -49,4 +49,4 @@ Play from a single-channel PCM WAV file with a given audio device index:
 ./pv_speaker_demo -i test.wav -d 2
 ```
 
-Hit `Ctrl+C` if you wish to stop audio playback before it completes. If no audio device index (`-d`) is provided, the demo will use the system's default audio player device.
+Hit `Ctrl+C` if you wish to stop playing audio before it completes. If no audio device index (`-d`) is provided, the demo will use the system's default audio player device.
