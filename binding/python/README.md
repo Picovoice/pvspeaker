@@ -64,7 +64,7 @@ When all frames have been written, run `flush()` to wait for all buffered pcm da
 speaker.flush()
 ```
 
-Once you are done playing audio, run `stop()` on the instance:
+To stop playing audio, run `stop()`:
 
 ```python
 speaker.stop()
@@ -72,7 +72,7 @@ speaker.stop()
 
 Note that in order to stop the audio before it finishes playing, `stop` must be run on a separate thread from `flush`.
 
-Once you are done (i.e. no longer need PvSpeaker to write and/or play PCM), free the resources acquired by PvSpeaker. You do not have to call `stop()` before `delete()`:
+Once you are done (i.e. no longer need PvSpeaker to write and/or play PCM), free the resources acquired by PvSpeaker by calling `delete`. Be sure to first call `stop` if the audio is still playing. Otherwise, if the audio has already finished playing, you do not have to call `stop` before `delete`:
 
 ```python
 speaker.delete()
