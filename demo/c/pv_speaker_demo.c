@@ -20,10 +20,12 @@
 
 static volatile bool is_interrupted = false;
 
+pv_speaker_t *speaker = NULL;
+
 void interrupt_handler(int _) {
     (void) _;
     is_interrupted = true;
-    pv_speaker_stop_flush();
+    pv_speaker_stop(speaker);
     fprintf(stdout, "\nStopped...\n");
 }
 
@@ -167,7 +169,6 @@ int main(int argc, char *argv[]) {
     void *pcm_data = read_wav_file(input_wav_path, &num_samples, &sample_rate, &bits_per_sample);
 
     fprintf(stdout, "Initializing pv_speaker...\n");
-    pv_speaker_t *speaker = NULL;
     pv_speaker_status_t status = pv_speaker_init(
             sample_rate,
             bits_per_sample,

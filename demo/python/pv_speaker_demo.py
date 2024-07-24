@@ -142,7 +142,7 @@ def main():
                 wavfile.close()
 
         except KeyboardInterrupt:
-            speaker.stop_flush()
+            speaker.stop()
             print("\nStopped...")
         finally:
             print("Deleting PvSpeaker...")

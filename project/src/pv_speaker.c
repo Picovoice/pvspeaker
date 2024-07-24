@@ -26,7 +26,7 @@
 
 #define PV_SPEAKER_VERSION "1.0.0"
 
-static bool is_flush_stopped = false;
+static bool is_stopped = false;
 static bool is_flushed_and_empty = false;
 static bool is_data_requested_while_empty = false;
 
@@ -252,7 +252,7 @@ PV_API pv_speaker_status_t pv_speaker_write(pv_speaker_t *object, int8_t *pcm, i
         return PV_SPEAKER_STATUS_INVALID_STATE;
     }
 
-    is_flush_stopped = false;
+    is_stopped = false;
 
     ma_mutex_lock(&object->mutex);
 
@@ -299,7 +299,7 @@ PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object, int8_t *pcm, i
     int32_t written = 0;
     *written_length = 0;
 
-    while (!is_flush_stopped && written < pcm_length) {
+    while (!is_stopped && written < pcm_length) {
         ma_mutex_lock(&object->mutex);
 
         int32_t available = 0;
@@ -327,7 +327,7 @@ PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object, int8_t *pcm, i
     }
 
     // waits for all frames to be copied to output buffer
-    while (!is_flush_stopped && !is_data_requested_while_empty) {
+    while (!is_stopped && !is_data_requested_while_empty) {
         ma_mutex_lock(&object->mutex);
 
         int32_t count = 0;
@@ -346,14 +346,12 @@ PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object, int8_t *pcm, i
     return PV_SPEAKER_STATUS_SUCCESS;
 }
 
-PV_API void pv_speaker_stop_flush() {
-    is_flush_stopped = true;
-}
-
 PV_API pv_speaker_status_t pv_speaker_stop(pv_speaker_t *object) {
     if (!object) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
+
+    is_stopped = true;
 
     ma_result result = ma_device_stop(&(object->device));
     if (result != MA_SUCCESS) {
