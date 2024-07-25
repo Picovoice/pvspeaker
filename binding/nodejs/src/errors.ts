@@ -15,7 +15,6 @@ import PvSpeakerStatus from "./pv_speaker_status_t";
 class PvSpeakerStatusOutOfMemoryError extends Error {}
 class PvSpeakerStatusInvalidArgumentError extends Error {}
 class PvSpeakerStatusInvalidStateError extends Error {}
-class PvSpeakerStatusOverflowBufferError extends Error {}
 class PvSpeakerStatusBackendError extends Error {}
 class PvSpeakerStatusDeviceAlreadyInitializedError extends Error {}
 class PvSpeakerStatusDeviceNotInitializedError extends Error {}
@@ -30,8 +29,6 @@ function pvSpeakerStatusToException(status: PvSpeakerStatus, errorMessage: strin
       return new PvSpeakerStatusInvalidArgumentError(errorMessage);
     case PvSpeakerStatus.INVALID_STATE:
       return new PvSpeakerStatusInvalidStateError(errorMessage);
-    case PvSpeakerStatus.OVERFLOW_BUFFER:
-      return new PvSpeakerStatusOverflowBufferError(errorMessage);
     case PvSpeakerStatus.BACKEND_ERROR:
       return new PvSpeakerStatusBackendError(errorMessage);
     case PvSpeakerStatus.DEVICE_ALREADY_INITIALIZED:

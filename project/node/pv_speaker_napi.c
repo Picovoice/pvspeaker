@@ -5,8 +5,8 @@
 #include "pv_speaker.h"
 
 napi_value napi_pv_speaker_init(napi_env env, napi_callback_info info) {
-    size_t argc = 5;
-    napi_value args[5];
+    size_t argc = 4;
+    napi_value args[4];
     napi_status status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
     if (status != napi_ok) {
         napi_throw_error(
@@ -36,8 +36,18 @@ napi_value napi_pv_speaker_init(napi_env env, napi_callback_info info) {
         return NULL;
     }
 
+    int32_t buffer_size_secs;
+    status = napi_get_value_int32(env, args[2], &buffer_size_secs);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT),
+                "Unable to get the buffer size secs");
+        return NULL;
+    }
+
     int32_t device_index;
-    status = napi_get_value_int32(env, args[2], &device_index);
+    status = napi_get_value_int32(env, args[3], &device_index);
     if (status != napi_ok) {
         napi_throw_error(
                 env,
@@ -46,33 +56,12 @@ napi_value napi_pv_speaker_init(napi_env env, napi_callback_info info) {
         return NULL;
     }
 
-    int32_t frame_length;
-    status = napi_get_value_int32(env, args[3], &frame_length);
-    if (status != napi_ok) {
-        napi_throw_error(
-                env,
-                pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT),
-                "Unable to get the frame length");
-        return NULL;
-    }
-
-    int32_t buffered_frames_count;
-    status = napi_get_value_int32(env, args[4], &buffered_frames_count);
-    if (status != napi_ok) {
-        napi_throw_error(
-                env,
-                pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT),
-                "Unable to get the buffered frames count");
-        return NULL;
-    }
-
     pv_speaker_t *handle = NULL;
     pv_speaker_status_t pv_speaker_status = pv_speaker_init(
             sample_rate,
-            frame_length,
             (int16_t) bits_per_sample,
+            buffer_size_secs,
             device_index,
-            buffered_frames_count,
             &handle);
     if (pv_speaker_status != PV_SPEAKER_STATUS_SUCCESS) {
         handle = NULL;
@@ -275,29 +264,170 @@ napi_value napi_pv_speaker_write(napi_env env, napi_callback_info info) {
         return NULL;
     }
 
-    int32_t bytes_per_sample = 1;
-    if (bits_per_sample == 16) {
-        bytes_per_sample = 2;
-    } else if (bits_per_sample == 24) {
-        bytes_per_sample = 3;
-    } else if (bits_per_sample == 32) {
-        bytes_per_sample = 4;
-    }
-
+    int32_t bytes_per_sample = bits_per_sample / 8;
+    int32_t written_length = 0;
     pv_speaker_status_t pv_speaker_status = pv_speaker_write(
-            (pv_speaker_t *)(uintptr_t) object_id, (int32_t) (byte_length / bytes_per_sample), (int8_t *) data);
+            (pv_speaker_t *)(uintptr_t) object_id,
+            (int8_t *) data,
+            (int32_t) (byte_length / bytes_per_sample),
+            &written_length);
 
-    napi_value result;
-    status = napi_create_int32(env, pv_speaker_status, &result);
+    napi_value object_js = NULL;
+    napi_value status_js = NULL;
+    napi_value written_length_js = NULL;
+    const char *ERROR_MSG = "Unable to allocate memory for the write result";
+
+    status = napi_create_object(env, &object_js);
     if (status != napi_ok) {
         napi_throw_error(
                 env,
                 pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
-                "Unable to allocate memory for the write result");
+                ERROR_MSG);
         return NULL;
     }
 
-    return result;
+    status = napi_create_int32(env, pv_speaker_status, &status_js);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
+                ERROR_MSG);
+        return NULL;
+    }
+    status = napi_set_named_property(env, object_js, "status", status_js);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
+                ERROR_MSG);
+        return NULL;
+    }
+
+    status = napi_create_int32(env, written_length, &written_length_js);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
+                ERROR_MSG);
+        return NULL;
+    }
+    status = napi_set_named_property(env, object_js, "written_length", written_length_js);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
+                ERROR_MSG);
+        return NULL;
+    }
+
+    return object_js;
+}
+
+napi_value napi_pv_speaker_flush(napi_env env, napi_callback_info info) {
+    size_t argc = 3;
+    napi_value args[3];
+    napi_status status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
+                "Unable to get input arguments");
+        return NULL;
+    }
+
+    uint64_t object_id = 0;
+    bool lossless = false;
+    status = napi_get_value_bigint_uint64(env, args[0], &object_id, &lossless);
+    if ((status != napi_ok) || !lossless) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
+                "Unable to get the address of the instance of PvSpeaker properly");
+        return NULL;
+    }
+
+    int32_t bits_per_sample;
+    status = napi_get_value_int32(env, args[1], &bits_per_sample);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT),
+                "Unable to get the bits per sample");
+        return NULL;
+    }
+
+    void* data = NULL;
+    size_t byte_length = 0;
+    status = napi_get_arraybuffer_info(env, args[2], &data, &byte_length);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
+                "Unable to get buffer");
+        return NULL;
+    }
+
+    if (byte_length == 0) {
+        int8_t val = 0;
+        data = &val;
+    }
+    int32_t bytes_per_sample = bits_per_sample / 8;
+    int32_t written_length = 0;
+    pv_speaker_status_t pv_speaker_status = pv_speaker_flush(
+            (pv_speaker_t *)(uintptr_t) object_id,
+            (int8_t *) data,
+            (int32_t) byte_length / bytes_per_sample,
+            &written_length);
+
+    napi_value object_js = NULL;
+    napi_value status_js = NULL;
+    napi_value written_length_js = NULL;
+    const char *ERROR_MSG = "Unable to allocate memory for the flush result";
+
+    status = napi_create_object(env, &object_js);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
+                ERROR_MSG);
+        return NULL;
+    }
+
+    status = napi_create_int32(env, pv_speaker_status, &status_js);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
+                ERROR_MSG);
+        return NULL;
+    }
+    status = napi_set_named_property(env, object_js, "status", status_js);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
+                ERROR_MSG);
+        return NULL;
+    }
+
+    status = napi_create_int32(env, written_length, &written_length_js);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
+                ERROR_MSG);
+        return NULL;
+    }
+    status = napi_set_named_property(env, object_js, "written_length", written_length_js);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
+                ERROR_MSG);
+        return NULL;
+    }
+
+    return object_js;
 }
 
 napi_value napi_pv_speaker_get_is_started(napi_env env, napi_callback_info info) {
@@ -337,44 +467,6 @@ napi_value napi_pv_speaker_get_is_started(napi_env env, napi_callback_info info)
 
     return result;
 }
-
-napi_value napi_pv_speaker_set_debug_logging(napi_env env, napi_callback_info info) {
-    size_t argc = 2;
-    napi_value args[2];
-    napi_status status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
-    if (status != napi_ok) {
-        napi_throw_error(
-                env,
-                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
-                "Unable to get input arguments");
-        return NULL;
-    }
-
-    uint64_t object_id = 0;
-    bool lossless = false;
-    status = napi_get_value_bigint_uint64(env, args[0], &object_id, &lossless);
-    if ((status != napi_ok) || !lossless) {
-        napi_throw_error(
-                env,
-                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
-                "Unable to get the address of the instance of PvSpeaker properly");
-        return NULL;
-    }
-
-    bool is_debug_logging_enabled;
-    status = napi_get_value_bool(env, args[1], &is_debug_logging_enabled);
-    if (status != napi_ok) {
-        napi_throw_error(
-                env,
-                pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT),
-                "Unable to get debug logging flag");
-        return NULL;
-    }
-
-    pv_speaker_set_debug_logging((pv_speaker_t *)(uintptr_t) object_id, is_debug_logging_enabled);
-    return NULL;
-}
-
 
 napi_value napi_pv_speaker_get_selected_device(napi_env env, napi_callback_info info) {
     size_t argc = 1;
@@ -505,11 +597,11 @@ napi_value Init(napi_env env, napi_value exports) {
     status = napi_define_properties(env, exports, 1, &desc);
     assert(status == napi_ok);
 
-    desc = DECLARE_NAPI_METHOD("get_is_started", napi_pv_speaker_get_is_started);
+    desc = DECLARE_NAPI_METHOD("flush", napi_pv_speaker_flush);
     status = napi_define_properties(env, exports, 1, &desc);
     assert(status == napi_ok);
 
-    desc = DECLARE_NAPI_METHOD("set_debug_logging", napi_pv_speaker_set_debug_logging);
+    desc = DECLARE_NAPI_METHOD("get_is_started", napi_pv_speaker_get_is_started);
     status = napi_define_properties(env, exports, 1, &desc);
     assert(status == napi_ok);
 

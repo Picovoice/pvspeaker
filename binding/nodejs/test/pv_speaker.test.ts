@@ -2,50 +2,63 @@ import { PvSpeaker } from "../src";
 
 const SAMPLE_RATE = 22050;
 const BITS_PER_SAMPLE = 16;
-const FRAME_LENGTH = 512;
+const BUFFER_SIZE_SECS = 10;
 
 describe("Test PvSpeaker", () => {
+  test("invalid sample rate", () => {
+    expect(() => {
+      new PvSpeaker(0, BITS_PER_SAMPLE);
+    }).toThrow(Error);
+  });
+
+  test("invalid bits per sample", () => {
+    expect(() => {
+      new PvSpeaker(SAMPLE_RATE, 0);
+    }).toThrow(Error);
+  });
+
+  test("invalid buffer size secs", () => {
+    expect(() => {
+      new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE, { bufferSizeSecs: 0 });
+    }).toThrow(Error);
+  });
+
   test("invalid device index", () => {
-    const f = () => {
-      new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE, -2);
-    };
-
-    expect(f).toThrow(Error);
-  });
-
-  test("invalid frame length", () => {
-    const f = () => {
-      new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE, 0, 0);
-    };
-
-    expect(f).toThrow(Error);
-  });
-
-  test("invalid buffered frames count", () => {
-    const f = () => {
-      new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE, 0, FRAME_LENGTH, 0);
-    };
-
-    expect(f).toThrow(Error);
+    expect(() => {
+      new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE, { deviceIndex: -2 });
+    }).toThrow(Error);
   });
 
   test("start stop", async () => {
-    const speaker = new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE);
-    speaker.start();
-
-    const f = async () => {
-      const frames = new Int16Array(FRAME_LENGTH * 2).buffer;
-      speaker.write(frames);
+    expect(() => {
+      const speaker = new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE);
+      speaker.start();
+      const pcm = new ArrayBuffer(SAMPLE_RATE);
+      speaker.write(pcm);
+      speaker.flush(pcm);
+      speaker.flush();
+      speaker.stop();
       speaker.release();
-    }
-
-    expect(f).not.toThrow(Error);
+    }).not.toThrow(Error);
   });
 
-  test("set debug logging", () => {
-    const speaker = new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE);
-    speaker.setDebugLogging(true);
-    speaker.setDebugLogging(false);
+  test("write flow", async () => {
+    const bufferSizeSecs = 1;
+    const circularBufferSize = SAMPLE_RATE * bufferSizeSecs;
+    const bytesPerSample = (BITS_PER_SAMPLE / 8)
+    const pcm = new ArrayBuffer(circularBufferSize * bytesPerSample + bytesPerSample);
+    const pcmLength = pcm.byteLength / bytesPerSample;
+
+    const speaker = new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE, { bufferSizeSecs });
+    speaker.start();
+
+    let writeCount = speaker.write(pcm);
+    expect(writeCount).toBe(circularBufferSize);
+    writeCount = speaker.flush(pcm);
+    expect(writeCount).toBe(pcmLength);
+    writeCount = speaker.flush();
+    expect(writeCount).toBe(0);
+
     speaker.release();
   });
 
@@ -90,32 +103,32 @@ describe("Test PvSpeaker", () => {
     speaker.release();
   });
 
-  test("bits per sample", () => {
-    const speaker = new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE);
-
-    expect(speaker.bitsPerSample).toBeDefined();
-    expect(typeof speaker.bitsPerSample).toBe("number");
-    expect(speaker.bitsPerSample).toBeGreaterThan(0);
-
-    speaker.release();
-  });
-
   test("sample rate", () => {
     const speaker = new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE);
 
     expect(speaker.sampleRate).toBeDefined();
     expect(typeof speaker.sampleRate).toBe("number");
-    expect(speaker.sampleRate).toBeGreaterThan(0);
+    expect(speaker.sampleRate).toBe(SAMPLE_RATE);
 
     speaker.release();
   });
 
-  test("frame length", () => {
+  test("bits per sample", () => {
     const speaker = new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE);
 
-    expect(speaker.frameLength).toBeDefined();
-    expect(typeof speaker.frameLength).toBe("number");
-    expect(speaker.frameLength).toBeGreaterThan(0);
+    expect(speaker.bitsPerSample).toBeDefined();
+    expect(typeof speaker.bitsPerSample).toBe("number");
+    expect(speaker.bitsPerSample).toBe(BITS_PER_SAMPLE);
+
+    speaker.release();
+  });
+
+  test("buffer size secs", () => {
+    const speaker = new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE, { bufferSizeSecs: BUFFER_SIZE_SECS });
+
+    expect(speaker.bufferSizeSecs).toBeDefined();
+    expect(typeof speaker.bufferSizeSecs).toBe("number");
+    expect(speaker.bufferSizeSecs).toBe(BUFFER_SIZE_SECS);
 
     speaker.release();
   });

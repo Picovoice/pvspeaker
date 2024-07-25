@@ -27,7 +27,7 @@ class PvSpeaker {
   private readonly _handle: number;
   private readonly _sampleRate: number;
   private readonly _bitsPerSample: number;
-  private readonly _frameLength: number;
+  private readonly _bufferSizeSecs: number;
   private readonly _version: string;
 
   /**
@@ -35,25 +35,25 @@ class PvSpeaker {
    *
    * @param sampleRate The sample rate of the audio to be played.
    * @param bitsPerSample The number of bits per sample.
-   * @param deviceIndex The audio device index to use to play audio. A value of (-1) will use machine's default audio device.
-   * @param frameLength Length of the audio frames to send per write call.
-   * @param bufferedFramesCount The number of audio frames buffered internally for writing - i.e. internal circular buffer
-   * will be of size `frameLength` * `bufferedFramesCount`. If this value is too low, buffer overflows could occur
-   * and audio frames could be dropped. A higher value will increase memory usage.
+   * @param options Optional configuration arguments.
+   * @param options.bufferSizeSecs The size in seconds of the internal buffer used to buffer PCM data
+   * - i.e. internal circular buffer will be of size `sampleRate` * `bufferSizeSecs`.
+   * @param options.deviceIndex The index of the audio device to use. A value of (-1) will resort to default device.
    */
   constructor(
     sampleRate: number,
     bitsPerSample: number,
-    deviceIndex: number = -1,
-    frameLength: number = 512,
-    bufferedFramesCount = 50,
+    options: {
+      bufferSizeSecs?: number;
+      deviceIndex?: number;
+    } = {}
   ) {
     let pvSpeakerHandleAndStatus;
+    const { bufferSizeSecs = 20, deviceIndex = -1 } = options;
     try {
-      pvSpeakerHandleAndStatus = PvSpeaker._pvSpeaker.init(
-        sampleRate, bitsPerSample, deviceIndex, frameLength, bufferedFramesCount);
+      pvSpeakerHandleAndStatus = PvSpeaker._pvSpeaker.init(sampleRate, bitsPerSample, bufferSizeSecs, deviceIndex);
     } catch (err: any) {
-      pvSpeakerStatusToException(err.code, err);
+      throw pvSpeakerStatusToException(err.code, err);
     }
     const status = pvSpeakerHandleAndStatus.status;
     if (status !== PvSpeakerStatus.SUCCESS) {
@@ -62,7 +62,7 @@ class PvSpeaker {
     this._handle = pvSpeakerHandleAndStatus.handle;
     this._sampleRate = sampleRate;
     this._bitsPerSample = bitsPerSample;
-    this._frameLength = frameLength;
+    this._bufferSizeSecs = bufferSizeSecs;
     this._version = PvSpeaker._pvSpeaker.version();
   }
 
@@ -81,10 +81,10 @@ class PvSpeaker {
   }
 
   /**
-   * @returns Length of the audio frames to send per write call.
+   * @returns The size in seconds of the internal buffer used to buffer PCM data.
    */
-  get frameLength(): number {
-    return this._frameLength;
+  get bufferSizeSecs(): number {
+    return this._bufferSizeSecs;
   }
 
   /**
@@ -95,14 +95,14 @@ class PvSpeaker {
   }
 
   /**
-   * @returns Whether PvSpeaker has started and is available to receive pcm frames or not.
+   * @returns Whether PvSpeaker has started and is available to receive PCM frames or not.
    */
   get isStarted(): boolean {
     return PvSpeaker._pvSpeaker.get_is_started(this._handle);
   }
 
   /**
-   * Starts the audio output device. After starting, pcm frames can be sent to the audio output device via `write`.
+   * Starts the audio output device. After starting, PCM frames can be sent to the audio output device via `write`.
    */
   public start(): void {
     const status = PvSpeaker._pvSpeaker.start(this._handle);
@@ -122,34 +122,34 @@ class PvSpeaker {
   }
 
   /**
-   * Synchronous call to write a frame of audio data.
+   * Synchronous call to write PCM data to the internal circular buffer for audio playback.
+   * Only writes as much PCM data as the internal circular buffer can currently fit, and
+   * returns the length of the PCM data that was successfully written.
    *
-   * @returns {Boolean}
+   * @returns {number}
    */
-  public write(pcm: ArrayBuffer): void {
-    let i = 0;
-    const frameLength = this._frameLength * this._bitsPerSample / 8;
-    while (i < pcm.byteLength) {
-      const isLastFrame = i + frameLength >= pcm.byteLength;
-      const writeFrameLength = isLastFrame ? pcm.byteLength - i : frameLength;
-      const frame = pcm.slice(i, i + writeFrameLength);
-      const status = PvSpeaker._pvSpeaker.write(this._handle, this._bitsPerSample, frame);
-      if (status !== PvSpeakerStatus.SUCCESS) {
-        throw pvSpeakerStatusToException(status, "PvSpeaker failed to write audio data frame.");
-      }
-
-      i += frameLength;
+  public write(pcm: ArrayBuffer): number {
+    const result = PvSpeaker._pvSpeaker.write(this._handle, this._bitsPerSample, pcm);
+    if (result.status !== PvSpeakerStatus.SUCCESS) {
+      throw pvSpeakerStatusToException(result.status, "PvSpeaker failed to write audio data frame.");
     }
+
+    return result.written_length;
   }
 
   /**
-   * Enable or disable debug logging for PvSpeaker. Debug logs will indicate when there are overflows in the internal
-   * frame buffer and when an audio source is generating frames of silence.
+   * Synchronous call to write PCM data to the internal circular buffer for audio playback.
+   * This call blocks the thread until all PCM data has been successfully written and played.
    *
-   * @param isDebugLoggingEnabled Boolean indicating whether the debug logging is enabled or disabled.
+   * @returns {number}
    */
-  public setDebugLogging(isDebugLoggingEnabled: boolean): void {
-    PvSpeaker._pvSpeaker.set_debug_logging(this._handle, isDebugLoggingEnabled);
+  public flush(pcm: ArrayBuffer = new ArrayBuffer(0)): number {
+    const result = PvSpeaker._pvSpeaker.flush(this._handle, this._bitsPerSample, pcm);
+    if (result.status !== PvSpeakerStatus.SUCCESS) {
+      throw pvSpeakerStatusToException(result.status, "PvSpeaker failed to flush audio data frame.");
+    }
+
+    return result.written_length;
   }
 
   /**

@@ -17,28 +17,46 @@ const { program } = require("commander");
 const { PvSpeaker } = require("@picovoice/pvspeaker-node");
 
 program
-.option(
-  "-i, --audio_device_index <number>",
-  "index of audio device to use to play audio",
-  Number,
-  -1
-).option(
-  "-d, --show_audio_devices",
-  "show the list of available devices"
-).option(
-  "-p, --input_wav_path <string>",
-  "path to PCM WAV file to be played"
-);
+  .option(
+    "-s, --show_audio_devices",
+    "show the list of available devices"
+  ).option(
+    "-d, --audio_device_index <number>",
+    "index of audio device to use to play audio",
+    Number,
+    -1
+  ).option(
+    "-i, --input_wav_path <string>",
+    "path to PCM WAV file to be played"
+  ).option(
+    "-b, --buffer_size_secs <number>",
+    "size of internal PCM buffer in seconds",
+    Number,
+    20
+  );
 
 if (process.argv.length < 2) {
   program.help();
 }
 program.parse(process.argv);
 
+function splitList(inputArrayBuffer, maxSublistLength) {
+  const inputArray = new Uint8Array(inputArrayBuffer);
+  const result = [];
+  for (let i = 0; i < inputArray.length; i += maxSublistLength) {
+    let endIndex = Math.min(i + maxSublistLength, inputArray.length);
+    const chunk = new Uint8Array(inputArray.slice(i, endIndex));
+    result.push(chunk.buffer);
+  }
+  
+  return result;
+}
+
 async function runDemo() {
-  let audioDeviceIndex = program["audio_device_index"];
   let showAudioDevices = program["show_audio_devices"];
+  let deviceIndex = program["audio_device_index"];
   let inputWavPath = program["input_wav_path"];
+  let bufferSizeSecs = program["buffer_size_secs"];
 
   if (showAudioDevices) {
     const devices = PvSpeaker.getAvailableDevices();
@@ -73,22 +91,38 @@ async function runDemo() {
     const headerSize = 44;
     const pcmBuffer = wavBuffer.buffer.slice(headerSize);
 
-    const speaker = new PvSpeaker(sampleRate, bitsPerSample, audioDeviceIndex);
-    console.log(`Using PvSpeaker version: ${speaker.version}`);
-
-    speaker.start();
-    console.log(`Using device: ${speaker.getSelectedDevice()}`);
-
-    console.log("Playing audio...");
+    let speaker = null;
     try {
-      speaker.write(pcmBuffer);
-      speaker.stop();
+      speaker = new PvSpeaker(sampleRate, bitsPerSample, { bufferSizeSecs, deviceIndex });
+      console.log(`Using PvSpeaker version: ${speaker.version}`);
+      console.log(`Using device: ${speaker.getSelectedDevice()}`);
+
+      speaker.start();
+
+      console.log("Playing audio...");
+      const bytesPerSample = bitsPerSample / 8;
+      const pcmList = splitList(pcmBuffer, sampleRate * bytesPerSample);
+
+      pcmList.forEach(pcmSublist => {
+        let sublistLength = pcmSublist.byteLength / bytesPerSample;
+        let totalWrittenLength = 0;
+        while (totalWrittenLength < sublistLength) {
+          let remainingBuffer = pcmSublist.slice(totalWrittenLength);
+          let writtenLength = speaker.write(remainingBuffer);
+          totalWrittenLength += writtenLength;
+        }
+      });
+
+      console.log("Waiting for audio to finish...");
+      speaker.flush();
+
       console.log("Finished playing audio...");
+      speaker.stop();
     } catch (e) {
       console.log(e.message);
+    } finally {
+      speaker?.release();
     }
-
-    speaker.release();
   }
 }
 
