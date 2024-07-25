@@ -39,6 +39,8 @@ RTLD
 stdbool
 stdint
 stdlib
+Sublist
+sublist
 subchunk
 typedarray
 vtable
