@@ -183,7 +183,8 @@ const { PvSpeaker } = require("@picovoice/pvspeaker-node");
 
 const sampleRate = 22050;
 const bitsPerSample = 16;
-const speaker = new PvSpeaker(sampleRate, bitsPerSample);
+const deviceIndex = 0;
+const speaker = new PvSpeaker(sampleRate, bitsPerSample, deviceIndex);
 
 speaker.start()
 ```
@@ -198,13 +199,19 @@ function getNextAudioFrame(): ArrayBuffer {
 speaker.write(getNextAudioFrame())
 ```
 
-To stop recording, call `stop()` on the instance:
+When all frames have been written, run `flush()` to wait for all buffered PCM data to be played:
+
+```typescript
+speaker.flush()
+```
+
+To stop playing audio, run `stop()`:
 
 ```typescript
 speaker.stop();
 ```
 
-Once you are done, free the resources acquired by PvSpeaker. You do not have to call `stop()` before `release()`:
+Once you are done (i.e. no longer need PvSpeaker to write and/or play PCM), free the resources acquired by PvSpeaker by calling `release`. You do not have to call `stop` before `release`:
 
 ```typescript
 speaker.release();

@@ -40,15 +40,15 @@ if (process.argv.length < 2) {
 }
 program.parse(process.argv);
 
-function splitList(inputArrayBuffer, maxSublistLength) {
-  const inputArray = new Uint8Array(inputArrayBuffer);
+function splitArrayBuffer(arrBuf, maxSize) {
+  const inputArray = new Uint8Array(arrBuf);
   const result = [];
-  for (let i = 0; i < inputArray.length; i += maxSublistLength) {
-    let endIndex = Math.min(i + maxSublistLength, inputArray.length);
+  for (let i = 0; i < inputArray.length; i += maxSize) {
+    let endIndex = Math.min(i + maxSize, inputArray.length);
     const chunk = new Uint8Array(inputArray.slice(i, endIndex));
     result.push(chunk.buffer);
   }
-  
+
   return result;
 }
 
@@ -65,7 +65,6 @@ async function runDemo() {
     }
   } else {
     const wavBuffer = fs.readFileSync(inputWavPath);
-
     if (wavBuffer.toString('utf8', 0, 4) !== 'RIFF' || wavBuffer.toString('utf8', 8, 12) !== 'WAVE') {
       throw new Error('Invalid WAV file');
     }
@@ -83,17 +82,11 @@ async function runDemo() {
       throw new Error('WAV file must have a single channel (MONO)');
     }
 
-    const dataChunkOffset = wavBuffer.indexOf('data', formatChunkOffset + 24);
-    if (dataChunkOffset === -1) {
-      throw new Error('Invalid WAV file: data chunk not found');
-    }
-
     const headerSize = 44;
     const pcmBuffer = wavBuffer.buffer.slice(headerSize);
 
-    let speaker = null;
     try {
-      speaker = new PvSpeaker(sampleRate, bitsPerSample, { bufferSizeSecs, deviceIndex });
+      const speaker = new PvSpeaker(sampleRate, bitsPerSample, { bufferSizeSecs, deviceIndex });
       console.log(`Using PvSpeaker version: ${speaker.version}`);
       console.log(`Using device: ${speaker.getSelectedDevice()}`);
 
@@ -101,13 +94,13 @@ async function runDemo() {
 
       console.log("Playing audio...");
       const bytesPerSample = bitsPerSample / 8;
-      const pcmList = splitList(pcmBuffer, sampleRate * bytesPerSample);
+      const pcmChunks = splitArrayBuffer(pcmBuffer, sampleRate * bytesPerSample);
 
-      pcmList.forEach(pcmSublist => {
-        let sublistLength = pcmSublist.byteLength / bytesPerSample;
+      pcmChunks.forEach(pcmChunk => {
+        let sublistLength = pcmChunk.byteLength / bytesPerSample;
         let totalWrittenLength = 0;
         while (totalWrittenLength < sublistLength) {
-          let remainingBuffer = pcmSublist.slice(totalWrittenLength);
+          let remainingBuffer = pcmChunk.slice(totalWrittenLength);
           let writtenLength = speaker.write(remainingBuffer);
           totalWrittenLength += writtenLength;
         }
@@ -118,10 +111,9 @@ async function runDemo() {
 
       console.log("Finished playing audio...");
       speaker.stop();
+      speaker.release();
     } catch (e) {
       console.log(e.message);
-    } finally {
-      speaker?.release();
     }
   }
 }

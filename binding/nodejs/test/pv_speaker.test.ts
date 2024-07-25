@@ -31,9 +31,10 @@ describe("Test PvSpeaker", () => {
 
   test("start stop", async () => {
     expect(() => {
-      const speaker = new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE);
-      speaker.start();
       const pcm = new ArrayBuffer(SAMPLE_RATE);
+      const speaker = new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE);
+
+      speaker.start();
       speaker.write(pcm);
       speaker.flush(pcm);
       speaker.flush();
@@ -48,17 +49,15 @@ describe("Test PvSpeaker", () => {
     const bytesPerSample = (BITS_PER_SAMPLE / 8)
     const pcm = new ArrayBuffer(circularBufferSize * bytesPerSample + bytesPerSample);
     const pcmLength = pcm.byteLength / bytesPerSample;
-
     const speaker = new PvSpeaker(SAMPLE_RATE, BITS_PER_SAMPLE, { bufferSizeSecs });
-    speaker.start();
 
+    speaker.start();
     let writeCount = speaker.write(pcm);
     expect(writeCount).toBe(circularBufferSize);
     writeCount = speaker.flush(pcm);
     expect(writeCount).toBe(pcmLength);
     writeCount = speaker.flush();
     expect(writeCount).toBe(0);
-
     speaker.release();
   });
 
@@ -67,10 +66,8 @@ describe("Test PvSpeaker", () => {
 
     speaker.start();
     expect(speaker.isStarted).toBeTruthy();
-
     speaker.stop();
     expect(speaker.isStarted).toBeFalsy();
-
     speaker.release();
   });
 

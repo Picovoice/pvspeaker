@@ -102,7 +102,7 @@ class PvSpeaker {
   }
 
   /**
-   * Starts the audio output device. After starting, PCM frames can be sent to the audio output device via `write`.
+   * Starts the audio output device. After starting, PCM frames can be sent to the audio output device via `write` and/or `flush`.
    */
   public start(): void {
     const status = PvSpeaker._pvSpeaker.start(this._handle);
@@ -126,12 +126,13 @@ class PvSpeaker {
    * Only writes as much PCM data as the internal circular buffer can currently fit, and
    * returns the length of the PCM data that was successfully written.
    *
-   * @returns {number}
+   * @param {ArrayBuffer} pcm PCM data to be played.
+   * @returns {number} The length of the PCM data that was successfully written.
    */
   public write(pcm: ArrayBuffer): number {
     const result = PvSpeaker._pvSpeaker.write(this._handle, this._bitsPerSample, pcm);
     if (result.status !== PvSpeakerStatus.SUCCESS) {
-      throw pvSpeakerStatusToException(result.status, "PvSpeaker failed to write audio data frame.");
+      throw pvSpeakerStatusToException(result.status, "PvSpeaker failed to write PCM data.");
     }
 
     return result.written_length;
@@ -140,20 +141,22 @@ class PvSpeaker {
   /**
    * Synchronous call to write PCM data to the internal circular buffer for audio playback.
    * This call blocks the thread until all PCM data has been successfully written and played.
+   * To simply wait for previously written PCM data to finish playing, call `flush` with no arguments.
    *
-   * @returns {number}
+   * @param {ArrayBuffer} pcm PCM data to be played.
+   * @returns {number} The length of the PCM data that was successfully written.
    */
   public flush(pcm: ArrayBuffer = new ArrayBuffer(0)): number {
     const result = PvSpeaker._pvSpeaker.flush(this._handle, this._bitsPerSample, pcm);
     if (result.status !== PvSpeakerStatus.SUCCESS) {
-      throw pvSpeakerStatusToException(result.status, "PvSpeaker failed to flush audio data frame.");
+      throw pvSpeakerStatusToException(result.status, "PvSpeaker failed to flush PCM data.");
     }
 
     return result.written_length;
   }
 
   /**
-   * Returns the name of the selected device used to capture audio.
+   * Returns the name of the selected device used to play audio.
    *
    * @returns {string} Name of the selected audio device.
    */
