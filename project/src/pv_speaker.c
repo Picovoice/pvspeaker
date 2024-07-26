@@ -503,7 +503,13 @@ PV_API const char *pv_speaker_version(void) {
     return PV_SPEAKER_VERSION;
 }
 
-static void write_wav_header(pv_speaker_t *object, FILE *file) {
+PV_API void pv_speaker_file_open(pv_speaker_t *object, const char *output_wav_path) {
+    if (!object || !output_wav_path) {
+        return;
+    }
+
+    FILE *file = fopen(output_wav_path, "wb");
+
     int32_t sample_rate = object->sample_rate;
     const char *chunk_id = "RIFF";
     const char *format = "WAVE";
@@ -531,16 +537,6 @@ static void write_wav_header(pv_speaker_t *object, FILE *file) {
     fwrite(&bits_per_sample, sizeof(bits_per_sample), 1, file);
     fwrite(subchunk2_id, 4, 1, file);
     fwrite(&subchunk2_size, sizeof(subchunk2_size), 1, file);
-}
-
-PV_API void pv_speaker_file_open(pv_speaker_t *object, const char *output_wav_path) {
-    if (!object || !output_wav_path) {
-        return;
-    }
-
-    FILE *file = fopen(output_wav_path, "wb");
-
-    write_wav_header(object, file);
 
     object->file = file;
 }
@@ -552,7 +548,33 @@ PV_API void pv_speaker_file_close(pv_speaker_t *object) {
 
     rewind(object->file);
 
-    write_wav_header(object, object->file);
+    int32_t sample_rate = object->sample_rate;
+    const char *chunk_id = "RIFF";
+    const char *format = "WAVE";
+    const char *subchunk1_id = "fmt ";
+    uint32_t subchunk1_size = 16;
+    uint16_t audio_format = 1;
+    uint16_t num_channels = 1;
+    uint32_t byte_rate = sample_rate * num_channels * (sizeof(int16_t));
+    uint16_t block_align = num_channels * (sizeof(int16_t));
+    uint16_t bits_per_sample = object->bits_per_sample;
+    const char *subchunk2_id = "data";
+    uint32_t subchunk2_size = object->num_samples * num_channels * (sizeof(int16_t));
+    uint32_t chunk_size = 36 + subchunk2_size;
+
+    fwrite(chunk_id, 4, 1, object->file);
+    fwrite(&chunk_size, sizeof(chunk_size), 1, object->file);
+    fwrite(format, 4, 1, object->file);
+    fwrite(subchunk1_id, 4, 1, object->file);
+    fwrite(&subchunk1_size, sizeof(subchunk1_size), 1, object->file);
+    fwrite(&audio_format, sizeof(audio_format), 1, object->file);
+    fwrite(&num_channels, sizeof(num_channels), 1, object->file);
+    fwrite(&sample_rate, sizeof(sample_rate), 1, object->file);
+    fwrite(&byte_rate, sizeof(byte_rate), 1, object->file);
+    fwrite(&block_align, sizeof(block_align), 1, object->file);
+    fwrite(&bits_per_sample, sizeof(bits_per_sample), 1, object->file);
+    fwrite(subchunk2_id, 4, 1, object->file);
+    fwrite(&subchunk2_size, sizeof(subchunk2_size), 1, object->file);
 
     fclose(object->file);
 }
