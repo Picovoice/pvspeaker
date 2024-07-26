@@ -183,6 +183,8 @@ int main(int argc, char *argv[]) {
     const char *selected_device = pv_speaker_get_selected_device(speaker);
     fprintf(stdout, "Selected device: %s.\n", selected_device);
 
+    pv_speaker_file_open(speaker, "test.wav");
+
     status = pv_speaker_start(speaker);
     if (status != PV_SPEAKER_STATUS_SUCCESS) {
         fprintf(stderr, "Failed to start device with %s.\n", pv_speaker_status_to_string(status));
@@ -231,6 +233,8 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Failed to stop device with %s.\n", pv_speaker_status_to_string(status));
         exit(1);
     }
+
+    pv_speaker_file_close(speaker);
 
     fprintf(stdout, "Deleting pv_speaker...\n");
     pv_speaker_delete(speaker);

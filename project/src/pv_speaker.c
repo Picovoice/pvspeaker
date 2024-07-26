@@ -36,9 +36,12 @@ struct pv_speaker {
     ma_context context;
     ma_device device;
     pv_circular_buffer_t *buffer;
+    int32_t sample_rate;
     int32_t bits_per_sample;
     bool is_started;
     ma_mutex mutex;
+    FILE *file;
+    int32_t num_samples;
 };
 
 static void pv_speaker_ma_callback(ma_device *device, void *output, const void *input, ma_uint32 frame_count) {
@@ -195,7 +198,9 @@ PV_API pv_speaker_status_t pv_speaker_init(
         return PV_SPEAKER_STATUS_OUT_OF_MEMORY;
     }
 
+    o->sample_rate = sample_rate;
     o->bits_per_sample = bits_per_sample;
+    o->num_samples = 0;
 
     *object = o;
 
@@ -270,6 +275,12 @@ PV_API pv_speaker_status_t pv_speaker_write(pv_speaker_t *object, int8_t *pcm, i
             ma_mutex_unlock(&object->mutex);
             return PV_SPEAKER_STATUS_RUNTIME_ERROR;
         }
+
+        if (object->file != NULL) {
+            size_t count = to_write * (object->bits_per_sample / 8);
+            fwrite(pcm, sizeof(int8_t), count, object->file);
+            object->num_samples += count;
+        }
     }
 
     *written_length = to_write;
@@ -320,6 +331,12 @@ PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object, int8_t *pcm, i
                 written += to_write;
                 *written_length = written;
             }
+
+            if (object->file != NULL) {
+                size_t count = to_write * (object->bits_per_sample / 8);
+                fwrite(pcm, sizeof(int8_t), count, object->file);
+                object->num_samples += count;
+            }
         }
 
         ma_mutex_unlock(&object->mutex);
@@ -362,6 +379,7 @@ PV_API pv_speaker_status_t pv_speaker_stop(pv_speaker_t *object) {
             return PV_SPEAKER_STATUS_INVALID_STATE;
         }
     }
+
 
     ma_mutex_lock(&object->mutex);
     pv_circular_buffer_reset(object->buffer);
@@ -483,4 +501,58 @@ PV_API const char *pv_speaker_status_to_string(pv_speaker_status_t status) {
 
 PV_API const char *pv_speaker_version(void) {
     return PV_SPEAKER_VERSION;
+}
+
+static void write_wav_header(pv_speaker_t *object, FILE *file) {
+    int32_t sample_rate = object->sample_rate;
+    const char *chunk_id = "RIFF";
+    const char *format = "WAVE";
+    const char *subchunk1_id = "fmt ";
+    uint32_t subchunk1_size = 16;
+    uint16_t audio_format = 1;
+    uint16_t num_channels = 1;
+    uint32_t byte_rate = sample_rate * num_channels * (sizeof(int16_t));
+    uint16_t block_align = num_channels * (sizeof(int16_t));
+    uint16_t bits_per_sample = object->bits_per_sample;
+    const char *subchunk2_id = "data";
+    uint32_t subchunk2_size = object->num_samples * num_channels * (sizeof(int16_t));
+    uint32_t chunk_size = 36 + subchunk2_size;
+
+    fwrite(chunk_id, 4, 1, file);
+    fwrite(&chunk_size, sizeof(chunk_size), 1, file);
+    fwrite(format, 4, 1, file);
+    fwrite(subchunk1_id, 4, 1, file);
+    fwrite(&subchunk1_size, sizeof(subchunk1_size), 1, file);
+    fwrite(&audio_format, sizeof(audio_format), 1, file);
+    fwrite(&num_channels, sizeof(num_channels), 1, file);
+    fwrite(&sample_rate, sizeof(sample_rate), 1, file);
+    fwrite(&byte_rate, sizeof(byte_rate), 1, file);
+    fwrite(&block_align, sizeof(block_align), 1, file);
+    fwrite(&bits_per_sample, sizeof(bits_per_sample), 1, file);
+    fwrite(subchunk2_id, 4, 1, file);
+    fwrite(&subchunk2_size, sizeof(subchunk2_size), 1, file);
+}
+
+PV_API void pv_speaker_file_open(pv_speaker_t *object, const char *output_wav_path) {
+    if (!object || !output_wav_path) {
+        return;
+    }
+
+    FILE *file = fopen(output_wav_path, "wb");
+
+    write_wav_header(object, file);
+
+    object->file = file;
+}
+
+PV_API void pv_speaker_file_close(pv_speaker_t *object) {
+    if (!object) {
+        return;
+    }
+
+    rewind(object->file);
+
+    write_wav_header(object, object->file);
+
+    fclose(object->file);
 }

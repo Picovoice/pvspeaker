@@ -172,4 +172,19 @@ PV_API const char *pv_speaker_status_to_string(pv_speaker_status_t status);
 */
 PV_API const char *pv_speaker_version(void);
 
+/**
+ * TODO
+ *
+ * @param object PvSpeaker object.
+ * @param output_wav_path TODO
+ */
+PV_API void pv_speaker_file_open(pv_speaker_t *object, const char *output_wav_path);
+
+/**
+ * TODO
+ *
+ * @param object PvSpeaker object.
+ */
+PV_API void pv_speaker_file_close(pv_speaker_t *object);
+
 #endif //PV_SPEAKER_H
