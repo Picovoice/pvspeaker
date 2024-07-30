@@ -215,11 +215,12 @@ static void write_wav_header(pv_speaker_t *object, FILE *file) {
     uint32_t subchunk1_size = 16;
     uint16_t audio_format = 1;
     uint16_t num_channels = 1;
-    uint32_t byte_rate = sample_rate * num_channels * (sizeof(int16_t));
-    uint16_t block_align = num_channels * (sizeof(int16_t));
     uint16_t bits_per_sample = object->bits_per_sample;
+    uint16_t sample_size = bits_per_sample / 8;
+    uint32_t byte_rate = sample_rate * num_channels * sample_size;
+    uint16_t block_align = num_channels * sample_size;
     const char *subchunk2_id = "data";
-    uint32_t subchunk2_size = object->num_samples * num_channels * (sizeof(int16_t));
+    uint32_t subchunk2_size = object->num_samples * num_channels * sample_size;
     uint32_t chunk_size = 36 + subchunk2_size;
 
     fwrite(chunk_id, 4, 1, file);
