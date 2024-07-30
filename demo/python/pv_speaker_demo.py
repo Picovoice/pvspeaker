@@ -61,6 +61,12 @@ def main():
         type=int,
         default=20)
 
+    parser.add_argument(
+        "--output_wav_path",
+        "-o",
+        help="Path to the output WAV file where the PCM data passed to PvSpeaker will be written.",
+        default=None)
+
     args = parser.parse_args()
 
     if args.show_audio_devices:
@@ -71,6 +77,7 @@ def main():
         device_index = args.audio_device_index
         input_path = args.input_wav_path
         buffer_size_secs = args.buffer_size_secs
+        output_path = args.output_wav_path
 
         wavfile = None
         speaker = None
@@ -120,6 +127,9 @@ def main():
                 pcm_list = split_list(pcm, sample_rate)
                 speaker.start()
 
+                if output_path:
+                    speaker.write_to_file(output_path)
+
                 print("Playing audio...")
                 for pcm_sublist in pcm_list:
                     sublist_length = len(pcm_sublist)
@@ -142,11 +152,11 @@ def main():
                 wavfile.close()
 
         except KeyboardInterrupt:
-            speaker.stop()
             print("\nStopped...")
+            speaker.stop()
         finally:
-            print("Deleting PvSpeaker...")
             if speaker is not None:
+                print("Deleting PvSpeaker...")
                 speaker.delete()
             if wavfile is not None:
                 wavfile.close()

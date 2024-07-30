@@ -173,12 +173,13 @@ PV_API const char *pv_speaker_status_to_string(pv_speaker_status_t status);
 PV_API const char *pv_speaker_version(void);
 
 /**
- * Writes PCM data passed to the PvSpeaker object to a specified WAV file.
- *
- * @param object PvSpeaker object.
- * @param output_wav_path The path to the output WAV file (.wav) where the PCM data will be written.
- */
+* Writes PCM data passed to PvSpeaker to a specified WAV file.
+*
+* @param object PvSpeaker object.
+* @param output_wav_path Path to the output WAV file where the PCM data will be written.
+* @return Status Code. Returns PV_SPEAKER_STATUS_RUNTIME_ERROR or PV_SPEAKER_STATUS_INVALID_ARGUMENT on failure.
+*/
 
-PV_API void pv_speaker_write_to_file(pv_speaker_t *object, const char *output_wav_path);
+PV_API pv_speaker_status_t pv_speaker_write_to_file(pv_speaker_t *object, const char *output_wav_path);
 
 #endif //PV_SPEAKER_H

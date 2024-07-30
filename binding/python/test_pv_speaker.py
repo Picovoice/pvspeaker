@@ -9,7 +9,7 @@
 #    specific language governing permissions and limitations under the License.
 #
 
-import os.path
+import os
 import unittest
 
 from _pvspeaker import *
@@ -59,6 +59,10 @@ class PvSpeakerTestCase(unittest.TestCase):
 
         speaker = PvSpeaker(sample_rate, 16, buffer_size_secs)
         speaker.start()
+        output_path = "tmp.wav"
+        speaker.write_to_file(output_path)
+        self.assertTrue(os.path.exists(output_path))
+        os.remove(output_path)
 
         write_count = speaker.write(pcm)
         self.assertEqual(write_count, circular_buffer_size)
@@ -67,6 +71,7 @@ class PvSpeakerTestCase(unittest.TestCase):
         write_count = speaker.flush()
         self.assertEqual(write_count, 0)
 
+        speaker.stop()
         speaker.delete()
 
     def test_is_started(self):

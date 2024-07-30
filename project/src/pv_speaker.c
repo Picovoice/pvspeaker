@@ -247,6 +247,7 @@ PV_API void pv_speaker_delete(pv_speaker_t *object) {
             rewind(object->file);
             write_wav_header(object, object->file);
             fclose(object->file);
+            object->file = NULL;
         }
         free(object);
     }
@@ -425,6 +426,7 @@ PV_API pv_speaker_status_t pv_speaker_stop(pv_speaker_t *object) {
         rewind(object->file);
         write_wav_header(object, object->file);
         fclose(object->file);
+        object->file = NULL;
     }
 
     return PV_SPEAKER_STATUS_SUCCESS;
@@ -544,14 +546,19 @@ PV_API const char *pv_speaker_version(void) {
     return PV_SPEAKER_VERSION;
 }
 
-PV_API void pv_speaker_write_to_file(pv_speaker_t *object, const char *output_wav_path) {
+PV_API pv_speaker_status_t pv_speaker_write_to_file(pv_speaker_t *object, const char *output_wav_path) {
     if (!object || !output_wav_path) {
-        return;
+        return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
 
     FILE *file = fopen(output_wav_path, "wb");
+    if (file == NULL) {
+        return PV_SPEAKER_STATUS_RUNTIME_ERROR;
+    }
 
     write_wav_header(object, file);
 
     object->file = file;
+
+    return PV_SPEAKER_STATUS_SUCCESS;
 }

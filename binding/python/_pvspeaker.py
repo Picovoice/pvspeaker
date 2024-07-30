@@ -150,6 +150,10 @@ class PvSpeaker(object):
         self._version_func.argtypes = None
         self._version_func.restype = c_char_p
 
+        self._write_to_file_func = library.pv_speaker_write_to_file
+        self._write_to_file_func.argtypes = [POINTER(self.CPvSpeaker), c_char_p]
+        self._write_to_file_func.restype = self.PvSpeakerStatuses
+
     def delete(self) -> None:
         """Releases any resources used by PvSpeaker."""
 
@@ -208,9 +212,16 @@ class PvSpeaker(object):
         status = self._flush_func(
             self._handle, c_char_p(self._pcm_to_bytes(pcm)), c_int32(len(pcm)), byref(written_length))
         if status is not self.PvSpeakerStatuses.SUCCESS:
-            raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to write to device.")
+            raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to flush PCM data.")
 
         return written_length.value
+
+    def write_to_file(self, output_path: str) -> None:
+        """Writes PCM data passed to PvSpeaker to a specified WAV file."""
+
+        status = self._write_to_file_func(self._handle, output_path.encode("utf-8"))
+        if status is not self.PvSpeakerStatuses.SUCCESS:
+            raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to open file. PCM data will not be written.")
 
     @property
     def is_started(self) -> bool:
