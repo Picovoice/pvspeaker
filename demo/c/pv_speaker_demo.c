@@ -33,7 +33,8 @@ static struct option long_options[] = {
         {"show_audio_devices", no_argument,       NULL, 's'},
         {"input_wav_path",     required_argument, NULL, 'i'},
         {"audio_device_index", required_argument, NULL, 'd'},
-        {"buffer_size_secs",   required_argument, NULL, 'b'}
+        {"buffer_size_secs",   required_argument, NULL, 'b'},
+        {"write_to_file",      required_argument, NULL, 'w'}
 };
 
 static void print_usage(const char *program_name) {
@@ -135,9 +136,10 @@ int main(int argc, char *argv[]) {
     const char *input_wav_path = NULL;
     int32_t device_index = -1;
     int32_t buffer_size_secs = 20;
+    const char *write_to_file = NULL;
 
     int c;
-    while ((c = getopt_long(argc, argv, "si:d:b:", long_options, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, "si:d:b:w:", long_options, NULL)) != -1) {
         switch (c) {
             case 's':
                 show_audio_devices();
@@ -150,6 +152,9 @@ int main(int argc, char *argv[]) {
                 break;
             case 'b':
                 buffer_size_secs = (int32_t) strtol(optarg, NULL, 10);
+                break;
+            case 'w':
+                write_to_file = optarg;
                 break;
             default:
                 exit(1);
@@ -183,7 +188,9 @@ int main(int argc, char *argv[]) {
     const char *selected_device = pv_speaker_get_selected_device(speaker);
     fprintf(stdout, "Selected device: %s.\n", selected_device);
 
-    pv_speaker_file_open(speaker, "test.wav");
+    if (write_to_file != NULL) {
+        pv_speaker_write_to_file(speaker, write_to_file);
+    }
 
     status = pv_speaker_start(speaker);
     if (status != PV_SPEAKER_STATUS_SUCCESS) {
@@ -233,8 +240,6 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Failed to stop device with %s.\n", pv_speaker_status_to_string(status));
         exit(1);
     }
-
-    pv_speaker_file_close(speaker);
 
     fprintf(stdout, "Deleting pv_speaker...\n");
     pv_speaker_delete(speaker);
