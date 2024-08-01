@@ -25,7 +25,11 @@ pv_speaker_t *speaker = NULL;
 void interrupt_handler(int _) {
     (void) _;
     is_interrupted = true;
-    pv_speaker_stop(speaker);
+    pv_speaker_status_t status = pv_speaker_stop(speaker);
+    if (status != PV_SPEAKER_STATUS_SUCCESS) {
+        fprintf(stderr, "Failed to stop device with %s.\n", pv_speaker_status_to_string(status));
+        exit(1);
+    }
     fprintf(stdout, "\nStopped...\n");
 }
 
@@ -220,25 +224,26 @@ int main(int argc, char *argv[]) {
         free(pcm);
     }
 
-    fprintf(stdout, "Waiting for audio to finish...\n");
-    int32_t pcm_length = 0;
-    int16_t pcm[pcm_length];
-    int8_t *pcm_ptr = (int8_t *) pcm;
-    int32_t written_length = 0;
-    status = pv_speaker_flush(speaker, pcm_ptr, pcm_length, &written_length);
-    if (status != PV_SPEAKER_STATUS_SUCCESS) {
-        fprintf(stderr, "Failed to flush pcm with %s.\n", pv_speaker_status_to_string(status));
-        exit(1);
+    if (!is_interrupted) {
+        fprintf(stdout, "Waiting for audio to finish...\n");
+        int32_t pcm_length = 0;
+        int16_t pcm[pcm_length];
+        int8_t *pcm_ptr = (int8_t *) pcm;
+        int32_t written_length = 0;
+        status = pv_speaker_flush(speaker, pcm_ptr, pcm_length, &written_length);
+        if (status != PV_SPEAKER_STATUS_SUCCESS) {
+            fprintf(stderr, "Failed to flush pcm with %s.\n", pv_speaker_status_to_string(status));
+            exit(1);
+        }
     }
 
     if (!is_interrupted) {
         fprintf(stdout, "Finished playing audio...\n");
-    }
-
-    status = pv_speaker_stop(speaker);
-    if (status != PV_SPEAKER_STATUS_SUCCESS) {
-        fprintf(stderr, "Failed to stop device with %s.\n", pv_speaker_status_to_string(status));
-        exit(1);
+        status = pv_speaker_stop(speaker);
+        if (status != PV_SPEAKER_STATUS_SUCCESS) {
+            fprintf(stderr, "Failed to stop device with %s.\n", pv_speaker_status_to_string(status));
+            exit(1);
+        }
     }
 
     fprintf(stdout, "Deleting pv_speaker...\n");

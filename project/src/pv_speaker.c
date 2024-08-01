@@ -26,9 +26,9 @@
 
 #define PV_SPEAKER_VERSION "1.0.0"
 
-static bool is_stopped = false;
-static bool is_flushed_and_empty = false;
-static bool is_data_requested_while_empty = false;
+static volatile bool is_stopped = false;
+static volatile bool is_flushed_and_empty = false;
+static volatile bool is_data_requested_while_empty = false;
 
 static const int32_t FLUSH_SLEEP_MS = 2;
 
@@ -259,9 +259,6 @@ PV_API pv_speaker_status_t pv_speaker_start(pv_speaker_t *object) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
 
-    is_flushed_and_empty = false;
-    is_data_requested_while_empty = false;
-
     ma_result result = ma_device_start(&(object->device));
     if (result != MA_SUCCESS) {
         if (result == MA_DEVICE_NOT_INITIALIZED) {
@@ -293,8 +290,6 @@ PV_API pv_speaker_status_t pv_speaker_write(pv_speaker_t *object, int8_t *pcm, i
     if (!(object->is_started)) {
         return PV_SPEAKER_STATUS_INVALID_STATE;
     }
-
-    is_stopped = false;
 
     ma_mutex_lock(&object->mutex);
 
@@ -331,9 +326,6 @@ PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object, int8_t *pcm, i
     if (!object) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
-    if (!pcm) {
-        return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
-    }
     if (pcm_length < 0) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
@@ -347,37 +339,41 @@ PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object, int8_t *pcm, i
     int32_t written = 0;
     *written_length = 0;
 
-    while (!is_stopped && written < pcm_length) {
-        ma_mutex_lock(&object->mutex);
+    bool was_stopped = is_stopped;
 
-        int32_t available = 0;
-        pv_circular_buffer_status_t status = pv_circular_buffer_get_available(object->buffer, &available);
-        if (status != PV_CIRCULAR_BUFFER_STATUS_SUCCESS) {
+    if (pcm) {
+        while (!is_stopped && written < pcm_length) {
+            ma_mutex_lock(&object->mutex);
+
+            int32_t available = 0;
+            pv_circular_buffer_status_t status = pv_circular_buffer_get_available(object->buffer, &available);
+            if (status != PV_CIRCULAR_BUFFER_STATUS_SUCCESS) {
+                ma_mutex_unlock(&object->mutex);
+                return PV_SPEAKER_STATUS_RUNTIME_ERROR;
+            }
+
+            int32_t remaining = pcm_length - written;
+            int32_t to_write = remaining < available ? remaining : available;
+            if (to_write > 0) {
+                status = pv_circular_buffer_write(
+                        object->buffer,
+                        &pcm[written * object->bits_per_sample / 8],
+                        to_write);
+                if (status == PV_CIRCULAR_BUFFER_STATUS_SUCCESS) {
+                    written += to_write;
+                    *written_length = written;
+                }
+
+                if (object->file != NULL) {
+                    size_t count = to_write * (object->bits_per_sample / 8);
+                    fwrite(pcm, sizeof(int8_t), count, object->file);
+                    object->num_samples += count;
+                }
+            }
+
             ma_mutex_unlock(&object->mutex);
-            return PV_SPEAKER_STATUS_RUNTIME_ERROR;
+            ma_sleep(FLUSH_SLEEP_MS);
         }
-
-        int32_t remaining = pcm_length - written;
-        int32_t to_write = remaining < available ? remaining : available;
-        if (to_write > 0) {
-            status = pv_circular_buffer_write(
-                    object->buffer,
-                    &pcm[written * object->bits_per_sample / 8],
-                    to_write);
-            if (status == PV_CIRCULAR_BUFFER_STATUS_SUCCESS) {
-                written += to_write;
-                *written_length = written;
-            }
-
-            if (object->file != NULL) {
-                size_t count = to_write * (object->bits_per_sample / 8);
-                fwrite(pcm, sizeof(int8_t), count, object->file);
-                object->num_samples += count;
-            }
-        }
-
-        ma_mutex_unlock(&object->mutex);
-        ma_sleep(FLUSH_SLEEP_MS);
     }
 
     // waits for all frames to be copied to output buffer
@@ -397,6 +393,13 @@ PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object, int8_t *pcm, i
         ma_sleep(FLUSH_SLEEP_MS);
     }
 
+    if (!was_stopped && !is_stopped) {
+        is_stopped = false;
+    }
+
+    is_flushed_and_empty = false;
+    is_data_requested_while_empty = false;
+
     return PV_SPEAKER_STATUS_SUCCESS;
 }
 
@@ -404,8 +407,6 @@ PV_API pv_speaker_status_t pv_speaker_stop(pv_speaker_t *object) {
     if (!object) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
-
-    is_stopped = true;
 
     ma_result result = ma_device_stop(&(object->device));
     if (result != MA_SUCCESS) {
@@ -429,6 +430,8 @@ PV_API pv_speaker_status_t pv_speaker_stop(pv_speaker_t *object) {
         fclose(object->file);
         object->file = NULL;
     }
+
+    is_stopped = true;
 
     return PV_SPEAKER_STATUS_SUCCESS;
 }
@@ -548,7 +551,10 @@ PV_API const char *pv_speaker_version(void) {
 }
 
 PV_API pv_speaker_status_t pv_speaker_write_to_file(pv_speaker_t *object, const char *output_wav_path) {
-    if (!object || !output_wav_path) {
+    if (!object) {
+        return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
+    }
+    if (!output_wav_path) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
 

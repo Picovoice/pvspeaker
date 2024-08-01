@@ -197,18 +197,18 @@ static void test_pv_speaker_start_stop(void) {
             pv_speaker_status_to_string(status),
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT));
 
-    printf("Call flush with null pcm\n");
-    status = pv_speaker_flush(speaker, NULL, pcm_length, &written_length);
+    printf("Call flush with valid args\n");
+    status = pv_speaker_flush(speaker, pcm_ptr, pcm_length, &written_length);
     check_condition(
-            status == PV_SPEAKER_STATUS_INVALID_ARGUMENT,
+            status == PV_SPEAKER_STATUS_SUCCESS,
             __FUNCTION__,
             __LINE__,
             "Speaker flush returned %s - expected %s.",
             pv_speaker_status_to_string(status),
-            pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT));
+            pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
 
-    printf("Call flush with valid args\n");
-    status = pv_speaker_flush(speaker, pcm_ptr, pcm_length, &written_length);
+    printf("Call flush with null pcm\n");
+    status = pv_speaker_flush(speaker, NULL, pcm_length, &written_length);
     check_condition(
             status == PV_SPEAKER_STATUS_SUCCESS,
             __FUNCTION__,
