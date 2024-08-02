@@ -41,7 +41,7 @@ class PvSpeakerTestCase(unittest.TestCase):
         try:
             speaker = PvSpeaker(16000, 16, 20)
             speaker.start()
-            pcm = [0] * (512 * 2)
+            pcm = [0] * 1000
             speaker.write(pcm)
             speaker.flush(pcm)
             speaker.flush()
@@ -62,7 +62,6 @@ class PvSpeakerTestCase(unittest.TestCase):
         output_path = "tmp.wav"
         speaker.write_to_file(output_path)
         self.assertTrue(os.path.exists(output_path))
-        os.remove(output_path)
 
         write_count = speaker.write(pcm)
         self.assertEqual(write_count, circular_buffer_size)
@@ -73,6 +72,7 @@ class PvSpeakerTestCase(unittest.TestCase):
 
         speaker.stop()
         speaker.delete()
+        os.remove(output_path)
 
     def test_is_started(self):
         speaker = PvSpeaker(16000, 16, 20)

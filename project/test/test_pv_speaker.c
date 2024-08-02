@@ -79,8 +79,9 @@ static void test_pv_speaker_init(void) {
 static void test_pv_speaker_start_stop(void) {
     pv_speaker_t *speaker = NULL;
     pv_speaker_status_t status;
-    int32_t pcm_length = 512;
+    int32_t pcm_length = 1000;
     int16_t pcm[pcm_length];
+    memset(pcm, 0, sizeof(pcm));
     int8_t *pcm_ptr = (int8_t *) pcm;
     int32_t written_length = 0;
 
@@ -246,6 +247,7 @@ static void test_pv_speaker_write_flow(void) {
     int32_t circular_buffer_size = sample_rate * buffer_size_secs;
     int32_t pcm_length = circular_buffer_size + 1;
     int16_t pcm[pcm_length];
+    memset(pcm, 0, sizeof(pcm));
     int8_t *pcm_ptr = (int8_t *) pcm;
     int32_t written_length = 0;
 
@@ -285,7 +287,6 @@ static void test_pv_speaker_write_flow(void) {
             "Speaker write to file returned %s - expected %s.",
             access(output_file, F_OK),
             true);
-    remove(output_file);
 
     printf("Call write with pcm length greater than circular buffer's capacity/available space\n");
     status = pv_speaker_write(speaker, pcm_ptr, pcm_length, &written_length);
@@ -331,6 +332,7 @@ static void test_pv_speaker_write_flow(void) {
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
 
     pv_speaker_delete(speaker);
+    remove(output_file);
 }
 
 static void test_pv_speaker_get_selected_device(void) {
