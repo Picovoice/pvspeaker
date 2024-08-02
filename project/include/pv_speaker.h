@@ -111,7 +111,7 @@ PV_API pv_speaker_status_t pv_speaker_write(pv_speaker_t *object, int8_t *pcm, i
 PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object, int8_t *pcm, int32_t pcm_length, int32_t *written_length);
 
 /**
-* Stops the device.
+* Stops the audio output device.
 *
 * @param object PvSpeaker object.
 * @return Status Code. Returns PV_SPEAKER_STATUS_INVALID_ARGUMENT or PV_SPEAKER_STATUS_INVALID_STATE on failure.
