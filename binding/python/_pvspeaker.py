@@ -225,7 +225,8 @@ class PvSpeaker(object):
 
         status = self._write_to_file_func(self._handle, output_path.encode("utf-8"))
         if status is not self.PvSpeakerStatuses.SUCCESS:
-            raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to open FILE object. PCM data will not be written.")
+            raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status](
+                "Failed to open FILE object. PCM data will not be written.")
 
     @property
     def is_started(self) -> bool:
