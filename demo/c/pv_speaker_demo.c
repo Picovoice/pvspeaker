@@ -25,7 +25,11 @@ pv_speaker_t *speaker = NULL;
 void interrupt_handler(int _) {
     (void) _;
     is_interrupted = true;
-    pv_speaker_stop(speaker);
+    pv_speaker_status_t status = pv_speaker_stop(speaker);
+    if (status != PV_SPEAKER_STATUS_SUCCESS) {
+        fprintf(stderr, "Failed to stop device with %s.\n", pv_speaker_status_to_string(status));
+        exit(1);
+    }
     fprintf(stdout, "\nStopped...\n");
 }
 
@@ -33,7 +37,8 @@ static struct option long_options[] = {
         {"show_audio_devices", no_argument,       NULL, 's'},
         {"input_wav_path",     required_argument, NULL, 'i'},
         {"audio_device_index", required_argument, NULL, 'd'},
-        {"buffer_size_secs",   required_argument, NULL, 'b'}
+        {"buffer_size_secs",   required_argument, NULL, 'b'},
+        {"output_wav_path",    required_argument, NULL, 'o'}
 };
 
 static void print_usage(const char *program_name) {
@@ -135,9 +140,10 @@ int main(int argc, char *argv[]) {
     const char *input_wav_path = NULL;
     int32_t device_index = -1;
     int32_t buffer_size_secs = 20;
+    const char *output_wav_path = NULL;
 
     int c;
-    while ((c = getopt_long(argc, argv, "si:d:b:", long_options, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, "si:d:b:o:", long_options, NULL)) != -1) {
         switch (c) {
             case 's':
                 show_audio_devices();
@@ -150,6 +156,9 @@ int main(int argc, char *argv[]) {
                 break;
             case 'b':
                 buffer_size_secs = (int32_t) strtol(optarg, NULL, 10);
+                break;
+            case 'o':
+                output_wav_path = optarg;
                 break;
             default:
                 exit(1);
@@ -183,6 +192,10 @@ int main(int argc, char *argv[]) {
     const char *selected_device = pv_speaker_get_selected_device(speaker);
     fprintf(stdout, "Selected device: %s.\n", selected_device);
 
+    if (output_wav_path != NULL) {
+        pv_speaker_write_to_file(speaker, output_wav_path);
+    }
+
     status = pv_speaker_start(speaker);
     if (status != PV_SPEAKER_STATUS_SUCCESS) {
         fprintf(stderr, "Failed to start device with %s.\n", pv_speaker_status_to_string(status));
@@ -211,25 +224,25 @@ int main(int argc, char *argv[]) {
         free(pcm);
     }
 
-    fprintf(stdout, "Waiting for audio to finish...\n");
-    int32_t pcm_length = 0;
-    int16_t pcm[pcm_length];
-    int8_t *pcm_ptr = (int8_t *) pcm;
-    int32_t written_length = 0;
-    status = pv_speaker_flush(speaker, pcm_ptr, pcm_length, &written_length);
-    if (status != PV_SPEAKER_STATUS_SUCCESS) {
-        fprintf(stderr, "Failed to flush pcm with %s.\n", pv_speaker_status_to_string(status));
-        exit(1);
+    if (!is_interrupted) {
+        fprintf(stdout, "Waiting for audio to finish...\n");
+        int8_t *pcm = NULL;
+        int32_t pcm_length = 0;
+        int32_t written_length = 0;
+        status = pv_speaker_flush(speaker, pcm, pcm_length, &written_length);
+        if (status != PV_SPEAKER_STATUS_SUCCESS) {
+            fprintf(stderr, "Failed to flush pcm with %s.\n", pv_speaker_status_to_string(status));
+            exit(1);
+        }
     }
 
     if (!is_interrupted) {
         fprintf(stdout, "Finished playing audio...\n");
-    }
-
-    status = pv_speaker_stop(speaker);
-    if (status != PV_SPEAKER_STATUS_SUCCESS) {
-        fprintf(stderr, "Failed to stop device with %s.\n", pv_speaker_status_to_string(status));
-        exit(1);
+        status = pv_speaker_stop(speaker);
+        if (status != PV_SPEAKER_STATUS_SUCCESS) {
+            fprintf(stderr, "Failed to stop device with %s.\n", pv_speaker_status_to_string(status));
+            exit(1);
+        }
     }
 
     fprintf(stdout, "Deleting pv_speaker...\n");

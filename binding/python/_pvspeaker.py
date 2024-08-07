@@ -150,20 +150,24 @@ class PvSpeaker(object):
         self._version_func.argtypes = None
         self._version_func.restype = c_char_p
 
+        self._write_to_file_func = library.pv_speaker_write_to_file
+        self._write_to_file_func.argtypes = [POINTER(self.CPvSpeaker), c_char_p]
+        self._write_to_file_func.restype = self.PvSpeakerStatuses
+
     def delete(self) -> None:
         """Releases any resources used by PvSpeaker."""
 
         self._delete_func(self._handle)
 
     def start(self) -> None:
-        """Starts buffering audio frames."""
+        """Starts the audio output device."""
 
         status = self._start_func(self._handle)
         if status is not self.PvSpeakerStatuses.SUCCESS:
             raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to start device.")
 
     def stop(self) -> None:
-        """Stops the device."""
+        """Stops the audio output device."""
 
         status = self._stop_func(self._handle)
         if status is not self.PvSpeakerStatuses.SUCCESS:
@@ -186,6 +190,8 @@ class PvSpeaker(object):
         Synchronous call to write PCM data to the internal circular buffer for audio playback.
         Only writes as much PCM data as the internal circular buffer can currently fit, and
         returns the length of the PCM data that was successfully written.
+
+        :return: Length of the PCM data that was successfully written.
         """
 
         written_length = c_int32()
@@ -200,6 +206,8 @@ class PvSpeaker(object):
         """
         Synchronous call to write PCM data to the internal circular buffer for audio playback.
         This call blocks the thread until all PCM data has been successfully written and played.
+
+        :return: Length of the PCM data that was successfully written.
         """
 
         if pcm is None:
@@ -208,9 +216,17 @@ class PvSpeaker(object):
         status = self._flush_func(
             self._handle, c_char_p(self._pcm_to_bytes(pcm)), c_int32(len(pcm)), byref(written_length))
         if status is not self.PvSpeakerStatuses.SUCCESS:
-            raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to write to device.")
+            raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status]("Failed to flush PCM data.")
 
         return written_length.value
+
+    def write_to_file(self, output_path: str) -> None:
+        """Writes PCM data passed to PvSpeaker to a specified WAV file."""
+
+        status = self._write_to_file_func(self._handle, output_path.encode("utf-8"))
+        if status is not self.PvSpeakerStatuses.SUCCESS:
+            raise self._PVSPEAKER_STATUS_TO_EXCEPTION[status](
+                "Failed to open FILE object. PCM data will not be written.")
 
     @property
     def is_started(self) -> bool:

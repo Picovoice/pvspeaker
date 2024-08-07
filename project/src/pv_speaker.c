@@ -26,9 +26,9 @@
 
 #define PV_SPEAKER_VERSION "1.0.0"
 
-static bool is_stopped = false;
-static bool is_flushed_and_empty = false;
-static bool is_data_requested_while_empty = false;
+static volatile bool is_stop_flush = false;
+static volatile bool is_flushed_and_empty = false;
+static volatile bool is_data_requested_while_empty = false;
 
 static const int32_t FLUSH_SLEEP_MS = 2;
 
@@ -36,9 +36,12 @@ struct pv_speaker {
     ma_context context;
     ma_device device;
     pv_circular_buffer_t *buffer;
+    int32_t sample_rate;
     int32_t bits_per_sample;
     bool is_started;
     ma_mutex mutex;
+    FILE *file;
+    int32_t num_samples;
 };
 
 static void pv_speaker_ma_callback(ma_device *device, void *output, const void *input, ma_uint32 frame_count) {
@@ -195,11 +198,44 @@ PV_API pv_speaker_status_t pv_speaker_init(
         return PV_SPEAKER_STATUS_OUT_OF_MEMORY;
     }
 
+    o->sample_rate = sample_rate;
     o->bits_per_sample = bits_per_sample;
+    o->num_samples = 0;
 
     *object = o;
 
     return PV_SPEAKER_STATUS_SUCCESS;
+}
+
+static void write_wav_header(pv_speaker_t *object, FILE *file) {
+    int32_t sample_rate = object->sample_rate;
+    const char *chunk_id = "RIFF";
+    const char *format = "WAVE";
+    const char *subchunk1_id = "fmt ";
+    uint32_t subchunk1_size = 16;
+    uint16_t audio_format = 1;
+    uint16_t num_channels = 1;
+    uint16_t bits_per_sample = object->bits_per_sample;
+    uint16_t sample_size = bits_per_sample / 8;
+    uint32_t byte_rate = sample_rate * num_channels * sample_size;
+    uint16_t block_align = num_channels * sample_size;
+    const char *subchunk2_id = "data";
+    uint32_t subchunk2_size = object->num_samples * num_channels * sample_size;
+    uint32_t chunk_size = 36 + subchunk2_size;
+
+    fwrite(chunk_id, 4, 1, file);
+    fwrite(&chunk_size, sizeof(chunk_size), 1, file);
+    fwrite(format, 4, 1, file);
+    fwrite(subchunk1_id, 4, 1, file);
+    fwrite(&subchunk1_size, sizeof(subchunk1_size), 1, file);
+    fwrite(&audio_format, sizeof(audio_format), 1, file);
+    fwrite(&num_channels, sizeof(num_channels), 1, file);
+    fwrite(&sample_rate, sizeof(sample_rate), 1, file);
+    fwrite(&byte_rate, sizeof(byte_rate), 1, file);
+    fwrite(&block_align, sizeof(block_align), 1, file);
+    fwrite(&bits_per_sample, sizeof(bits_per_sample), 1, file);
+    fwrite(subchunk2_id, 4, 1, file);
+    fwrite(&subchunk2_size, sizeof(subchunk2_size), 1, file);
 }
 
 PV_API void pv_speaker_delete(pv_speaker_t *object) {
@@ -208,6 +244,12 @@ PV_API void pv_speaker_delete(pv_speaker_t *object) {
         ma_context_uninit(&(object->context));
         ma_mutex_uninit(&(object->mutex));
         pv_circular_buffer_delete(object->buffer);
+        if (object->file != NULL) {
+            rewind(object->file);
+            write_wav_header(object, object->file);
+            fclose(object->file);
+            object->file = NULL;
+        }
         free(object);
     }
 }
@@ -216,9 +258,6 @@ PV_API pv_speaker_status_t pv_speaker_start(pv_speaker_t *object) {
     if (!object) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
-
-    is_flushed_and_empty = false;
-    is_data_requested_while_empty = false;
 
     ma_result result = ma_device_start(&(object->device));
     if (result != MA_SUCCESS) {
@@ -252,8 +291,6 @@ PV_API pv_speaker_status_t pv_speaker_write(pv_speaker_t *object, int8_t *pcm, i
         return PV_SPEAKER_STATUS_INVALID_STATE;
     }
 
-    is_stopped = false;
-
     ma_mutex_lock(&object->mutex);
 
     int32_t available = 0;
@@ -270,6 +307,12 @@ PV_API pv_speaker_status_t pv_speaker_write(pv_speaker_t *object, int8_t *pcm, i
             ma_mutex_unlock(&object->mutex);
             return PV_SPEAKER_STATUS_RUNTIME_ERROR;
         }
+
+        if (object->file != NULL) {
+            size_t count = to_write * (object->bits_per_sample / 8);
+            fwrite(pcm, sizeof(int8_t), count, object->file);
+            object->num_samples += count;
+        }
     }
 
     *written_length = to_write;
@@ -281,9 +324,6 @@ PV_API pv_speaker_status_t pv_speaker_write(pv_speaker_t *object, int8_t *pcm, i
 
 PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object, int8_t *pcm, int32_t pcm_length, int32_t *written_length) {
     if (!object) {
-        return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
-    }
-    if (!pcm) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
     if (pcm_length < 0) {
@@ -299,35 +339,48 @@ PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object, int8_t *pcm, i
     int32_t written = 0;
     *written_length = 0;
 
-    while (!is_stopped && written < pcm_length) {
-        ma_mutex_lock(&object->mutex);
+    is_stop_flush = false;
 
-        int32_t available = 0;
-        pv_circular_buffer_status_t status = pv_circular_buffer_get_available(object->buffer, &available);
-        if (status != PV_CIRCULAR_BUFFER_STATUS_SUCCESS) {
-            ma_mutex_unlock(&object->mutex);
-            return PV_SPEAKER_STATUS_RUNTIME_ERROR;
-        }
+    if (pcm != NULL) {
+        while (!is_stop_flush && written < pcm_length) {
+            ma_mutex_lock(&object->mutex);
 
-        int32_t remaining = pcm_length - written;
-        int32_t to_write = remaining < available ? remaining : available;
-        if (to_write > 0) {
-            status = pv_circular_buffer_write(
-                    object->buffer,
-                    &pcm[written * object->bits_per_sample / 8],
-                    to_write);
-            if (status == PV_CIRCULAR_BUFFER_STATUS_SUCCESS) {
-                written += to_write;
-                *written_length = written;
+            int32_t available = 0;
+            pv_circular_buffer_status_t status = pv_circular_buffer_get_available(object->buffer, &available);
+            if (status != PV_CIRCULAR_BUFFER_STATUS_SUCCESS) {
+                ma_mutex_unlock(&object->mutex);
+                return PV_SPEAKER_STATUS_RUNTIME_ERROR;
             }
-        }
 
-        ma_mutex_unlock(&object->mutex);
-        ma_sleep(FLUSH_SLEEP_MS);
+            int32_t remaining = pcm_length - written;
+            int32_t to_write = remaining < available ? remaining : available;
+            if (to_write > 0) {
+                status = pv_circular_buffer_write(
+                        object->buffer,
+                        &pcm[written * object->bits_per_sample / 8],
+                        to_write);
+                if (status != PV_CIRCULAR_BUFFER_STATUS_SUCCESS) {
+                    ma_mutex_unlock(&object->mutex);
+                    return PV_SPEAKER_STATUS_RUNTIME_ERROR;
+                }
+
+                written += to_write;
+                *written_length += to_write;
+
+                if (object->file != NULL) {
+                    size_t count = to_write * (object->bits_per_sample / 8);
+                    fwrite(pcm, sizeof(int8_t), count, object->file);
+                    object->num_samples += count;
+                }
+            }
+
+            ma_mutex_unlock(&object->mutex);
+            ma_sleep(FLUSH_SLEEP_MS);
+        }
     }
 
     // waits for all frames to be copied to output buffer
-    while (!is_stopped && !is_data_requested_while_empty) {
+    while (!is_stop_flush && !is_data_requested_while_empty) {
         ma_mutex_lock(&object->mutex);
 
         int32_t count = 0;
@@ -343,6 +396,9 @@ PV_API pv_speaker_status_t pv_speaker_flush(pv_speaker_t *object, int8_t *pcm, i
         ma_sleep(FLUSH_SLEEP_MS);
     }
 
+    is_flushed_and_empty = false;
+    is_data_requested_while_empty = false;
+
     return PV_SPEAKER_STATUS_SUCCESS;
 }
 
@@ -351,7 +407,7 @@ PV_API pv_speaker_status_t pv_speaker_stop(pv_speaker_t *object) {
         return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
     }
 
-    is_stopped = true;
+    is_stop_flush = true;
 
     ma_result result = ma_device_stop(&(object->device));
     if (result != MA_SUCCESS) {
@@ -367,6 +423,13 @@ PV_API pv_speaker_status_t pv_speaker_stop(pv_speaker_t *object) {
     pv_circular_buffer_reset(object->buffer);
     object->is_started = false;
     ma_mutex_unlock(&object->mutex);
+
+    if (object->file != NULL) {
+        rewind(object->file);
+        write_wav_header(object, object->file);
+        fclose(object->file);
+        object->file = NULL;
+    }
 
     return PV_SPEAKER_STATUS_SUCCESS;
 }
@@ -483,4 +546,24 @@ PV_API const char *pv_speaker_status_to_string(pv_speaker_status_t status) {
 
 PV_API const char *pv_speaker_version(void) {
     return PV_SPEAKER_VERSION;
+}
+
+PV_API pv_speaker_status_t pv_speaker_write_to_file(pv_speaker_t *object, const char *output_wav_path) {
+    if (!object) {
+        return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
+    }
+    if (!output_wav_path) {
+        return PV_SPEAKER_STATUS_INVALID_ARGUMENT;
+    }
+
+    FILE *file = fopen(output_wav_path, "wb");
+    if (file == NULL) {
+        return PV_SPEAKER_STATUS_RUNTIME_ERROR;
+    }
+
+    write_wav_header(object, file);
+
+    object->file = file;
+
+    return PV_SPEAKER_STATUS_SUCCESS;
 }

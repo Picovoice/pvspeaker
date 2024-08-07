@@ -144,7 +144,7 @@ static void test_pv_circular_buffer_read_write(void) {
             __LINE__,
             "Failed to initialize buffer.");
 
-    int32_t in_size = 512;
+    int32_t in_size = 1000;
     int16_t in_buffer[in_size];
     for (int32_t i = 0; i < in_size; i++) {
         in_buffer[i] = (int16_t) ((rand() % (2000 + 1)) - 1000);

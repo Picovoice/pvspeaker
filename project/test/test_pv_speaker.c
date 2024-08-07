@@ -10,6 +10,7 @@
 */
 
 #include "string.h"
+#include <unistd.h>
 
 #include "pv_speaker.h"
 #include "test_helper.h"
@@ -78,8 +79,9 @@ static void test_pv_speaker_init(void) {
 static void test_pv_speaker_start_stop(void) {
     pv_speaker_t *speaker = NULL;
     pv_speaker_status_t status;
-    int32_t pcm_length = 512;
+    int32_t pcm_length = 1000;
     int16_t pcm[pcm_length];
+    memset(pcm, 0, sizeof(pcm));
     int8_t *pcm_ptr = (int8_t *) pcm;
     int32_t written_length = 0;
 
@@ -196,18 +198,18 @@ static void test_pv_speaker_start_stop(void) {
             pv_speaker_status_to_string(status),
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT));
 
-    printf("Call flush with null pcm\n");
-    status = pv_speaker_flush(speaker, NULL, pcm_length, &written_length);
+    printf("Call flush with valid args\n");
+    status = pv_speaker_flush(speaker, pcm_ptr, pcm_length, &written_length);
     check_condition(
-            status == PV_SPEAKER_STATUS_INVALID_ARGUMENT,
+            status == PV_SPEAKER_STATUS_SUCCESS,
             __FUNCTION__,
             __LINE__,
             "Speaker flush returned %s - expected %s.",
             pv_speaker_status_to_string(status),
-            pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT));
+            pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
 
-    printf("Call flush with valid args\n");
-    status = pv_speaker_flush(speaker, pcm_ptr, pcm_length, &written_length);
+    printf("Call flush with null pcm\n");
+    status = pv_speaker_flush(speaker, NULL, pcm_length, &written_length);
     check_condition(
             status == PV_SPEAKER_STATUS_SUCCESS,
             __FUNCTION__,
@@ -245,6 +247,7 @@ static void test_pv_speaker_write_flow(void) {
     int32_t circular_buffer_size = sample_rate * buffer_size_secs;
     int32_t pcm_length = circular_buffer_size + 1;
     int16_t pcm[pcm_length];
+    memset(pcm, 0, sizeof(pcm));
     int8_t *pcm_ptr = (int8_t *) pcm;
     int32_t written_length = 0;
 
@@ -257,28 +260,79 @@ static void test_pv_speaker_write_flow(void) {
             pv_speaker_status_to_string(status),
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
 
+    printf("Call start\n");
+    status = pv_speaker_start(speaker);
+    check_condition(
+            status == PV_SPEAKER_STATUS_SUCCESS,
+            __FUNCTION__,
+            __LINE__,
+            "Speaker start returned %s - expected %s.",
+            pv_speaker_status_to_string(status),
+            pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
+
+    const char *output_file = "tmp.wav";
+    printf("Call write to file\n");
+    status = pv_speaker_write_to_file(speaker, output_file);
+    check_condition(
+            status == PV_SPEAKER_STATUS_SUCCESS,
+            __FUNCTION__,
+            __LINE__,
+            "Speaker write to file returned %s - expected %s.",
+            pv_speaker_status_to_string(status),
+            pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
+    check_condition(
+            access(output_file, F_OK) == 0,
+            __FUNCTION__,
+            __LINE__,
+            "Speaker write to file returned %s - expected %s.",
+            access(output_file, F_OK),
+            true);
+
     printf("Call write with pcm length greater than circular buffer's capacity/available space\n");
     status = pv_speaker_write(speaker, pcm_ptr, pcm_length, &written_length);
     check_condition(
-            (status == PV_SPEAKER_STATUS_SUCCESS && written_length == circular_buffer_size),
+            status == PV_SPEAKER_STATUS_SUCCESS,
             __FUNCTION__,
             __LINE__,
             "Speaker write returned %s - expected %s.",
             pv_speaker_status_to_string(status),
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
+    check_condition(
+            written_length == circular_buffer_size,
+            __FUNCTION__,
+            __LINE__,
+            "Speaker write returned %s - expected %s.",
+            written_length,
+            circular_buffer_size);
 
     printf("Call flush with pcm length greater than circular buffer's capacity/available space\n");
     status = pv_speaker_flush(speaker, pcm_ptr, pcm_length, &written_length);
     check_condition(
-            (status == PV_SPEAKER_STATUS_SUCCESS && written_length == pcm_length),
+            status == PV_SPEAKER_STATUS_SUCCESS,
             __FUNCTION__,
             __LINE__,
             "Speaker flush returned %s - expected %s.",
             pv_speaker_status_to_string(status),
             pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
+    check_condition(
+            written_length == pcm_length,
+            __FUNCTION__,
+            __LINE__,
+            "Speaker flush returned %s - expected %s.",
+            written_length,
+            pcm_length);
 
-    pv_speaker_stop(speaker);
+    status = pv_speaker_stop(speaker);
+    check_condition(
+            status == PV_SPEAKER_STATUS_SUCCESS,
+            __FUNCTION__,
+            __LINE__,
+            "Speaker stop returned %s - expected %s.",
+            pv_speaker_status_to_string(status),
+            pv_speaker_status_to_string(PV_SPEAKER_STATUS_SUCCESS));
+
     pv_speaker_delete(speaker);
+    remove(output_file);
 }
 
 static void test_pv_speaker_get_selected_device(void) {
@@ -369,6 +423,7 @@ int main() {
     test_pv_speaker_version();
     test_pv_speaker_init();
     test_pv_speaker_start_stop();
+    test_pv_speaker_write_flow();
     test_pv_speaker_get_selected_device();
 
     return 0;
