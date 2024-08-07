@@ -55,9 +55,12 @@ jobs:
         pulseaudio --check || pulseaudio --start
         pactl load-module module-null-sink
 
-    - name: Install BlackHole on macOS
+    - name: Install PulseAudio on macOS
       if: matrix.os == 'macos-latest'
-      run: brew install blackhole-2ch
+      run: |
+        brew install pulseaudio
+        pulseaudio --check || pulseaudio --start
+        pactl load-module module-null-sink
 
     - name: Test
       run: python3 test_pv_speaker.py
