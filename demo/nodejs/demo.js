@@ -19,20 +19,23 @@ const { PvSpeaker } = require("@picovoice/pvspeaker-node");
 program
   .option(
     "-s, --show_audio_devices",
-    "show the list of available devices"
+    "List of audio devices currently available for use."
   ).option(
     "-d, --audio_device_index <number>",
-    "index of audio device to use to play audio",
+    "Index of input audio device.",
     Number,
     -1
   ).option(
     "-i, --input_wav_path <string>",
-    "path to PCM WAV file to be played"
+    "Path to PCM WAV file to be played."
   ).option(
     "-b, --buffer_size_secs <number>",
-    "size of internal PCM buffer in seconds",
+    "Size of internal PCM buffer in seconds.",
     Number,
     20
+  ).option(
+    "-o, --output_wav_path <string>",
+    "Path to the output WAV file where the PCM data passed to PvSpeaker will be written."
   );
 
 if (process.argv.length < 2) {
@@ -57,6 +60,7 @@ async function runDemo() {
   let deviceIndex = program["audio_device_index"];
   let inputWavPath = program["input_wav_path"];
   let bufferSizeSecs = program["buffer_size_secs"];
+  let outputPath = program["output_wav_path"];
 
   if (showAudioDevices) {
     const devices = PvSpeaker.getAvailableDevices();
@@ -92,19 +96,20 @@ async function runDemo() {
 
       speaker.start();
 
+      if (outputPath) {
+        speaker.writeToFile(outputPath);
+      }
+
       console.log("Playing audio...");
       const bytesPerSample = bitsPerSample / 8;
       const pcmChunks = splitArrayBuffer(pcmBuffer, sampleRate * bytesPerSample);
-
-      pcmChunks.forEach(pcmChunk => {
-        let sublistLength = pcmChunk.byteLength / bytesPerSample;
-        let totalWrittenLength = 0;
-        while (totalWrittenLength < sublistLength) {
-          let remainingBuffer = pcmChunk.slice(totalWrittenLength);
-          let writtenLength = speaker.write(remainingBuffer);
-          totalWrittenLength += writtenLength;
+      for (const pcmChunk of pcmChunks) {
+        let totalWrittenByteLength = 0;
+        while (totalWrittenByteLength < pcmChunk.byteLength) {
+          const writtenLength = speaker.write(pcmChunk.slice(totalWrittenByteLength));
+          totalWrittenByteLength += (writtenLength * bytesPerSample);
         }
-      });
+      }
 
       console.log("Waiting for audio to finish...");
       speaker.flush();

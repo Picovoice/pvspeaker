@@ -38,7 +38,7 @@ class PvSpeaker {
    * @param options Optional configuration arguments.
    * @param options.bufferSizeSecs The size in seconds of the internal buffer used to buffer PCM data
    * - i.e. internal circular buffer will be of size `sampleRate` * `bufferSizeSecs`.
-   * @param options.deviceIndex The index of the audio device to use. A value of (-1) will resort to default device.
+   * @param options.deviceIndex The audio device index to use to play audio. A value of (-1) will use the machine's default audio device.
    */
   constructor(
     sampleRate: number,
@@ -57,7 +57,7 @@ class PvSpeaker {
     }
     const status = pvSpeakerHandleAndStatus.status;
     if (status !== PvSpeakerStatus.SUCCESS) {
-      throw pvSpeakerStatusToException(status, "PvSpeaker failed to initialize.");
+      throw pvSpeakerStatusToException(status, "Failed to initialize PvSpeaker.");
     }
     this._handle = pvSpeakerHandleAndStatus.handle;
     this._sampleRate = sampleRate;
@@ -67,57 +67,57 @@ class PvSpeaker {
   }
 
   /**
-   * @returns The sample rate of the audio to be played.
+   * @returns {number} The sample rate matching the value passed to the constructor.
    */
   get sampleRate(): number {
     return this._sampleRate;
   }
 
   /**
-   * @returns The number of bits per sample.
+   * @returns {number} The bits per sample matching the value passed to the constructor.
    */
   get bitsPerSample(): number {
     return this._bitsPerSample;
   }
 
   /**
-   * @returns The size in seconds of the internal buffer used to buffer PCM data.
+   * @returns {number} The buffer size in seconds matching the value passed to the constructor.
    */
   get bufferSizeSecs(): number {
     return this._bufferSizeSecs;
   }
 
   /**
-   * @returns the version of the PvSpeaker
+   * @returns {number} The current version of PvSpeaker library.
    */
   get version(): string {
     return this._version;
   }
 
   /**
-   * @returns Whether PvSpeaker has started and is available to receive PCM frames or not.
+   * @returns {boolean} Whether the speaker has started and is available to receive pcm frames or not.
    */
   get isStarted(): boolean {
     return PvSpeaker._pvSpeaker.get_is_started(this._handle);
   }
 
   /**
-   * Starts the audio output device. After starting, PCM frames can be sent to the audio output device via `write` and/or `flush`.
+   * Starts the audio output device.
    */
   public start(): void {
     const status = PvSpeaker._pvSpeaker.start(this._handle);
     if (status !== PvSpeakerStatus.SUCCESS) {
-      throw pvSpeakerStatusToException(status, "PvSpeaker failed to start.");
+      throw pvSpeakerStatusToException(status, "Failed to start device.");
     }
   }
 
   /**
-   * Stops playing audio.
+   * Stops the audio output device.
    */
   public stop(): void {
     const status = PvSpeaker._pvSpeaker.stop(this._handle);
     if (status !== PvSpeakerStatus.SUCCESS) {
-      throw pvSpeakerStatusToException(status, "PvSpeaker failed to stop.");
+      throw pvSpeakerStatusToException(status, "Failed to stop device.");
     }
   }
 
@@ -127,12 +127,12 @@ class PvSpeaker {
    * returns the length of the PCM data that was successfully written.
    *
    * @param {ArrayBuffer} pcm PCM data to be played.
-   * @returns {number} The length of the PCM data that was successfully written.
+   * @returns {number} Length of the PCM data that was successfully written.
    */
   public write(pcm: ArrayBuffer): number {
     const result = PvSpeaker._pvSpeaker.write(this._handle, this._bitsPerSample, pcm);
     if (result.status !== PvSpeakerStatus.SUCCESS) {
-      throw pvSpeakerStatusToException(result.status, "PvSpeaker failed to write PCM data.");
+      throw pvSpeakerStatusToException(result.status, "Failed to write to device.");
     }
 
     return result.written_length;
@@ -141,7 +141,6 @@ class PvSpeaker {
   /**
    * Synchronous call to write PCM data to the internal circular buffer for audio playback.
    * This call blocks the thread until all PCM data has been successfully written and played.
-   * To simply wait for previously written PCM data to finish playing, call `flush` with no arguments.
    *
    * @param {ArrayBuffer} pcm PCM data to be played.
    * @returns {number} The length of the PCM data that was successfully written.
@@ -149,14 +148,26 @@ class PvSpeaker {
   public flush(pcm: ArrayBuffer = new ArrayBuffer(0)): number {
     const result = PvSpeaker._pvSpeaker.flush(this._handle, this._bitsPerSample, pcm);
     if (result.status !== PvSpeakerStatus.SUCCESS) {
-      throw pvSpeakerStatusToException(result.status, "PvSpeaker failed to flush PCM data.");
+      throw pvSpeakerStatusToException(result.status, "Failed to flush PCM data.");
     }
 
     return result.written_length;
   }
 
   /**
-   * Returns the name of the selected device used to play audio.
+   * Writes PCM data passed to PvSpeaker to a specified WAV file.
+   *
+   * @param {string} outputPath Path to the output WAV file where the PCM data will be written.
+   */
+  public writeToFile(outputPath: string): void {
+    const status = PvSpeaker._pvSpeaker.write_to_file(this._handle, outputPath);
+    if (status !== PvSpeakerStatus.SUCCESS) {
+      throw pvSpeakerStatusToException(status, "Failed to open FILE object. PCM data will not be written.");
+    }
+  }
+
+  /**
+   * Gets the audio device that the given PvSpeaker instance is using.
    *
    * @returns {string} Name of the selected audio device.
    */

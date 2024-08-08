@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 #include "node_api.h"
 
@@ -6,7 +7,7 @@
 
 napi_value napi_pv_speaker_init(napi_env env, napi_callback_info info) {
     size_t argc = 4;
-    napi_value args[4];
+    napi_value args[argc];
     napi_status status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
     if (status != napi_ok) {
         napi_throw_error(
@@ -119,7 +120,7 @@ napi_value napi_pv_speaker_init(napi_env env, napi_callback_info info) {
 
 napi_value napi_pv_speaker_delete(napi_env env, napi_callback_info info) {
     size_t argc = 1;
-    napi_value args[1];
+    napi_value args[argc];
     napi_status status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
     if (status != napi_ok) {
         napi_throw_error(
@@ -146,7 +147,7 @@ napi_value napi_pv_speaker_delete(napi_env env, napi_callback_info info) {
 
 napi_value napi_pv_speaker_start(napi_env env, napi_callback_info info) {
     size_t argc = 1;
-    napi_value args[1];
+    napi_value args[argc];
     napi_status status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
     if (status != napi_ok) {
         napi_throw_error(
@@ -184,7 +185,7 @@ napi_value napi_pv_speaker_start(napi_env env, napi_callback_info info) {
 
 napi_value napi_pv_speaker_stop(napi_env env, napi_callback_info info) {
     size_t argc = 1;
-    napi_value args[1];
+    napi_value args[argc];
     napi_status status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
     if (status != napi_ok) {
         napi_throw_error(
@@ -222,7 +223,7 @@ napi_value napi_pv_speaker_stop(napi_env env, napi_callback_info info) {
 
 napi_value napi_pv_speaker_write(napi_env env, napi_callback_info info) {
     size_t argc = 3;
-    napi_value args[3];
+    napi_value args[argc];
     napi_status status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
     if (status != napi_ok) {
         napi_throw_error(
@@ -325,7 +326,7 @@ napi_value napi_pv_speaker_write(napi_env env, napi_callback_info info) {
 
 napi_value napi_pv_speaker_flush(napi_env env, napi_callback_info info) {
     size_t argc = 3;
-    napi_value args[3];
+    napi_value args[argc];
     napi_status status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
     if (status != napi_ok) {
         napi_throw_error(
@@ -432,7 +433,7 @@ napi_value napi_pv_speaker_flush(napi_env env, napi_callback_info info) {
 
 napi_value napi_pv_speaker_get_is_started(napi_env env, napi_callback_info info) {
     size_t argc = 1;
-    napi_value args[1];
+    napi_value args[argc];
     napi_status status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
     if (status != napi_ok) {
         napi_throw_error(
@@ -470,7 +471,7 @@ napi_value napi_pv_speaker_get_is_started(napi_env env, napi_callback_info info)
 
 napi_value napi_pv_speaker_get_selected_device(napi_env env, napi_callback_info info) {
     size_t argc = 1;
-    napi_value args[1];
+    napi_value args[argc];
     napi_status status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
     if (status != napi_ok) {
         napi_throw_error(
@@ -558,6 +559,72 @@ napi_value napi_pv_speaker_get_available_devices(napi_env env, napi_callback_inf
     return result;
 }
 
+napi_value napi_pv_speaker_write_to_file(napi_env env, napi_callback_info info) {
+    size_t argc = 2;
+    napi_value args[argc];
+    napi_status status = napi_get_cb_info(env, info, &argc, args, NULL, NULL);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
+                "Unable to get input arguments");
+        return NULL;
+    }
+
+    uint64_t object_id = 0;
+    bool lossless = false;
+    status = napi_get_value_bigint_uint64(env, args[0], &object_id, &lossless);
+    if ((status != napi_ok) || !lossless) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
+                "Unable to get the address of the instance of PvSpeaker properly");
+        return NULL;
+    }
+
+    size_t length = 0;
+    status = napi_get_value_string_utf8(env, args[1], NULL, 0, &length);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT),
+                "Unable to get the output path");
+        return NULL;
+    }
+    char *output_path = (char *) calloc(length + 1, sizeof(char));
+    if (!output_path) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_OUT_OF_MEMORY),
+                "Unable to allocate memory");
+        return NULL;
+    }
+    status = napi_get_value_string_utf8(env, args[1], output_path, length + 1, &length);
+    if (status != napi_ok) {
+        free(output_path);
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_INVALID_ARGUMENT),
+                "Unable to get the output path");
+        return NULL;
+    }
+
+    pv_speaker_status_t pv_speaker_status = pv_speaker_write_to_file(
+            (pv_speaker_t *)(uintptr_t) object_id, output_path);
+
+    napi_value result;
+    status = napi_create_int32(env, pv_speaker_status, &result);
+    if (status != napi_ok) {
+        napi_throw_error(
+                env,
+                pv_speaker_status_to_string(PV_SPEAKER_STATUS_RUNTIME_ERROR),
+                "Unable to allocate memory for the write to file result");
+        return NULL;
+    }
+
+    return result;
+}
+
 napi_value napi_pv_speaker_version(napi_env env, napi_callback_info info) {
     (void)(info);
 
@@ -610,6 +677,10 @@ napi_value Init(napi_env env, napi_value exports) {
     assert(status == napi_ok);
 
     desc = DECLARE_NAPI_METHOD("get_available_devices", napi_pv_speaker_get_available_devices);
+    status = napi_define_properties(env, exports, 1, &desc);
+    assert(status == napi_ok);
+
+    desc = DECLARE_NAPI_METHOD("write_to_file", napi_pv_speaker_write_to_file);
     status = napi_define_properties(env, exports, 1, &desc);
     assert(status == napi_ok);
 

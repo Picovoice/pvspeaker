@@ -184,7 +184,7 @@ const { PvSpeaker } = require("@picovoice/pvspeaker-node");
 const sampleRate = 22050;
 const bitsPerSample = 16;
 const deviceIndex = 0;
-const speaker = new PvSpeaker(sampleRate, bitsPerSample, deviceIndex);
+const speaker = new PvSpeaker(sampleRate, bitsPerSample, { deviceIndex });
 
 speaker.start()
 ```
