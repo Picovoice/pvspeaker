@@ -7,6 +7,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
 
 option(PV_BUILD_TESTS "Build and run library tests" ON)
+option(PV_BUILD_NODE "Build Node.js libraries" ON)
 
 if(NOT PV_SPEAKER_PLATFORM)
     message(FATAL_ERROR "No `PV_SPEAKER_PLATFORM` value was given. Valid platforms are: \n"
@@ -97,4 +98,8 @@ if (PV_BUILD_TESTS)
             NAME test_speaker
             COMMAND test_speaker
     )
+endif()
+
+if (PV_BUILD_NODE)
+    add_subdirectory(node)
 endif()
