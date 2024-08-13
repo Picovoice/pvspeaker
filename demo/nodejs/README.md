@@ -8,7 +8,7 @@ PvSpeaker is an easy-to-use, cross-platform audio player designed for real-time 
 
 ## Compatibility
 
-- Node.js 14+
+- Node.js 16+
 - Runs on Linux (x86_64), macOS (x86_64 and arm64), Windows (x86_64), and Raspberry Pi (3, 4, 5).
 
 ## Installation:

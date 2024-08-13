@@ -2,8 +2,10 @@
 # yarn lockfile v1
 
 
-"@picovoice/pvspeaker-node@file:../../binding/nodejs":
+"@picovoice/pvspeaker-node@~1.0.0":
   version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@picovoice/pvspeaker-node/-/pvspeaker-node-1.0.0.tgz#6b87b86138a8bb256e46ea41cb7d258ff8534337"
+  integrity sha512-qhH4ktObGj/Dd7iiptPXqf89U3l7FbCiaB1xY439YE3EFLsfsvZvjAzEwsF5A01h47AbXJTCdAjvkXrcsdt0/w==
 
 commander@^6.1.0:
   version "6.2.1"
