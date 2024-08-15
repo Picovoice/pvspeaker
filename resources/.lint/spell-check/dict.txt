@@ -1,6 +1,7 @@
 aarch
 argstype
 armv
+arraybuffer
 bitwidth
 Cdecl
 cpvspeaker
@@ -38,6 +39,8 @@ RTLD
 stdbool
 stdint
 stdlib
+Sublist
+sublist
 subchunk
 typedarray
 vtable

@@ -2,6 +2,7 @@
 
 <!-- markdown-link-check-disable -->
 [![PyPI](https://img.shields.io/pypi/v/pvspeaker)](https://pypi.org/project/pvspeaker/)
+[![npm](https://img.shields.io/npm/v/@picovoice/pvspeaker-node?label=npm%20%5Bnode%5D)](https://www.npmjs.com/package/@picovoice/pvspeaker-node)
 <!-- markdown-link-check-enable -->
 
 Made in Vancouver, Canada by [Picovoice](https://picovoice.ai)
@@ -19,9 +20,11 @@ PvSpeaker is an easy-to-use, cross-platform audio player designed for real-time 
     - [Source Code](#source-code)
     - [Demos](#demos)
       - [Python](#python-demo)
+      - [Node.js](#nodejs-demo)
       - [C](#c-demo)
     - [SDKs](#sdks)
-      - [Python](#python) 
+      - [Python](#python)
+      - [Node.js](#nodejs)
 
 ## Source Code
 
@@ -65,6 +68,30 @@ pv_speaker_demo --input_wav_path {INPUT_WAV_PATH}
 Replace `{INPUT_WAV_PATH}` with the path to the PCM WAV file you wish to play.
 
 For more information about the Python demos go to [demo/python](demo/python).
+
+### Node.js Demo
+
+Install the demo package:
+
+```console
+yarn global add @picovoice/pvspeaker-node-demo
+```
+
+To show the available audio devices run:
+
+```console
+pvspeaker-node-demo --show_audio_devices
+```
+
+With a working speaker connected to your device run the following in the terminal:
+
+```console
+pvspeaker-node-demo --input_wav_path ${INPUT_WAV_PATH}
+```
+
+Replace `{INPUT_WAV_PATH}` with the path to the `wav` file you wish to play.
+
+For more information about Node.js demo, go to [demo/nodejs](demo/nodejs).
 
 ### C Demo
 
@@ -140,3 +167,54 @@ speaker.delete()
 ```
 
 For more information about the PvSpeaker Python SDK, go to [binding/python](binding/python).
+
+### Node.js
+
+Install Node.js binding:
+
+```console
+yarn add @picovoice/pvspeaker-node
+```
+
+To start playing audio, initialize the instance and run `start()`:
+
+```typescript
+const { PvSpeaker } = require("@picovoice/pvspeaker-node");
+
+const sampleRate = 22050;
+const bitsPerSample = 16;
+const deviceIndex = 0;
+const speaker = new PvSpeaker(sampleRate, bitsPerSample, { deviceIndex });
+
+speaker.start()
+```
+
+Write frames of audio:
+
+```typescript
+function getNextAudioFrame(): ArrayBuffer {
+    //
+}
+
+speaker.write(getNextAudioFrame())
+```
+
+When all frames have been written, run `flush()` to wait for all buffered PCM data to be played:
+
+```typescript
+speaker.flush()
+```
+
+To stop playing audio, run `stop()`:
+
+```typescript
+speaker.stop();
+```
+
+Once you are done (i.e. no longer need PvSpeaker to write and/or play PCM), free the resources acquired by PvSpeaker by calling `release`. You do not have to call `stop` before `release`:
+
+```typescript
+speaker.release();
+```
+
+For more information about the PvSpeaker Node.js SDK, go to [binding/nodejs](binding/nodejs).
