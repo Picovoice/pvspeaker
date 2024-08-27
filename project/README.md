@@ -65,22 +65,22 @@ if (status != PV_SPEAKER_STATUS_SUCCESS) {
 3. Write PCM data to the speaker:
 
 ```c
-int32_3 num_samples;
+int32_t num_samples;
 int8_t *pcm = get_pcm_data(&num_samples);
-int32_3 written_length = 0;
+int32_t written_length = 0;
 
 pv_speaker_status_t status = pv_speaker_write(speaker, pcm, num_samples, &written_length);
 if (status != PV_SPEAKER_STATUS_SUCCESS) {
-    // handle PvSpeaker start error
+    // handle PvSpeaker write error
 }
 ```
 
 4. Wait for buffered audio to finish playing:
 
 ```c
-int32_3 num_samples;
+int32_t num_samples;
 int8_t *pcm = get_pcm_data(&num_samples);
-int32_3 written_length = 0;
+int32_t written_length = 0;
 
 pv_speaker_status_t status = pv_speaker_flush(speaker, pcm, num_samples, &written_length);
 if (status != PV_SPEAKER_STATUS_SUCCESS) {
