@@ -49,7 +49,7 @@ speaker = PvSpeaker(
 speaker.start()
 ```
 
-Write frames of audio:
+Write PCM data to the speaker:
 
 ```python
 def get_next_audio_frame():
@@ -58,13 +58,24 @@ def get_next_audio_frame():
 speaker.write(get_next_audio_frame())
 ```
 
-When all frames have been written, run `flush()` to wait for all buffered pcm data to be played:
+Note: the `write()` method only writes as much PCM data as the internal circular buffer can currently fit, and returns the length of the PCM data that was successfully written.
+
+When all frames have been written, run `flush()` to wait for all buffered pcm data (i.e. previously buffered via `write()`) to be played:
 
 ```python
 speaker.flush()
 ```
 
-To stop playing audio, run `stop()`:
+Note: calling `flush()` with PCM data as an argument will both write that PCM data and wait for all buffered PCM data to finish.
+
+```python
+def get_remaining_audio_frames():
+    pass
+
+speaker.flush(get_remaining_audio_frames())
+```
+
+To stop the audio output device, run `stop()`:
 
 ```python
 speaker.stop()
