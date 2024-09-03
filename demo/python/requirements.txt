@@ -1,1 +1,1 @@
-pvspeaker==1.0.2
+../../binding/python/dist/pvspeaker-1.0.3-py3-none-any.whl
