@@ -1,1 +1,1 @@
-pvspeaker==1.0.2
+pvspeaker==1.0.3

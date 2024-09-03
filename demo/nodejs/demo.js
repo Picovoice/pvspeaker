@@ -68,6 +68,10 @@ async function runDemo() {
       console.log(`index: ${i}, device name: ${devices[i]}`)
     }
   } else {
+    if (!inputWavPath) {
+      program.help();
+      return;
+    }
     const wavBuffer = fs.readFileSync(inputWavPath);
     if (wavBuffer.toString('utf8', 0, 4) !== 'RIFF' || wavBuffer.toString('utf8', 8, 12) !== 'WAVE') {
       throw new Error('Invalid WAV file');

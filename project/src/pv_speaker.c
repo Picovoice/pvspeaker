@@ -474,10 +474,10 @@ PV_API pv_speaker_status_t pv_speaker_get_available_devices(
     ma_uint32 playback_count;
     result = ma_context_get_devices(
             &context,
-            NULL,
-            NULL,
             &playback_info,
-            &playback_count);
+            &playback_count,
+            NULL,
+            NULL);
     if (result != MA_SUCCESS) {
         ma_context_uninit(&context);
         if (result == MA_OUT_OF_MEMORY) {
