@@ -1,0 +1,5 @@
+.vs
+PvSpeakerDemo/bin/**
+PvSpeakerDemo/obj/**
+PvSpeakerDemo/Properties/**
+*.user
