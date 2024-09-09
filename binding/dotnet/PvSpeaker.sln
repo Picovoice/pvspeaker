@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PvSpeaker", "PvSpeaker\PvSpeaker.csproj", "{01BF71A9-E1CC-45BD-9133-3C3E1802610F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PvSpeakerTest", "PvSpeakerTest\PvSpeakerTest.csproj", "{58A87279-8F10-4EC6-ACDF-D64E2FAA88E3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{01BF71A9-E1CC-45BD-9133-3C3E1802610F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01BF71A9-E1CC-45BD-9133-3C3E1802610F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01BF71A9-E1CC-45BD-9133-3C3E1802610F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01BF71A9-E1CC-45BD-9133-3C3E1802610F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58A87279-8F10-4EC6-ACDF-D64E2FAA88E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58A87279-8F10-4EC6-ACDF-D64E2FAA88E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58A87279-8F10-4EC6-ACDF-D64E2FAA88E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58A87279-8F10-4EC6-ACDF-D64E2FAA88E3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

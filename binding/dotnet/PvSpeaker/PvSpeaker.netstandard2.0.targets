@@ -1,0 +1,31 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <ItemGroup>
+        <Content Include="$(MSBuildThisFileDirectory)../../lib/netstandard2.0/PvSpeaker.dll">
+            <Link>PvSpeaker.dll</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Visible>False</Visible>
+        </Content>
+        <Content Include="$(MSBuildThisFileDirectory)libpv_speaker.dll">
+            <Link>libpv_speaker.dll</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Visible>false</Visible>
+        </Content>
+        <Content Include="$(MSBuildThisFileDirectory)libpv_speaker.dylib">
+            <Link>libpv_speaker.dylib</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Visible>false</Visible>
+        </Content>
+        <Content Include="$(MSBuildThisFileDirectory)libpv_speaker.so">
+            <Link>libpv_speaker.so</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Visible>false</Visible>
+        </Content>
+    </ItemGroup>
+    <ItemGroup>
+        <Content Include="$(MSBuildThisFileDirectory)scripts/**">
+            <Link>scripts/%(Filename)%(Extension)</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Visible>false</Visible>
+        </Content>
+    </ItemGroup>
+</Project>
