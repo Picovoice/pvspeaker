@@ -67,9 +67,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Build .NET demo
-      run: dotnet build
-
       # ************** REMOVE AFTER RELEASE ********************
     - name: Pack .NET SDK
       run: dotnet pack -c Release
@@ -78,6 +75,9 @@ jobs:
     - name: Add local NuGet package file
       run: dotnet add package -s ../../../binding/dotnet/PvSpeaker/bin/Release PvSpeaker
       # ********************************************************
+
+    - name: Build .NET demo
+      run: dotnet build
 
     - name: Run .NET demo
       run: dotnet run -- --show_audio_devices
