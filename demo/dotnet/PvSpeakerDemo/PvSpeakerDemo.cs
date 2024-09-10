@@ -10,11 +10,11 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Collections.Generic;
 
 using Pv;
 
@@ -48,7 +48,7 @@ namespace PvSpeakerDemo
             public int BitsPerSample { get; set; }
             public byte[] AudioData { get; set; }
         }
-        
+
         /// <summary>
         /// Reads a WAV file and returns appropriate metadata.
         /// </summary>
@@ -95,7 +95,7 @@ namespace PvSpeakerDemo
 
                 if (channels != 1)
                     throw new InvalidDataException("WAV file must have a single channel (MONO)");
-                
+
                 string dataChunkId = new string(binaryReader.ReadChars(4));
                 if (dataChunkId != "data")
                     throw new InvalidDataException("Invalid WAV file data chunk.");
@@ -213,7 +213,7 @@ namespace PvSpeakerDemo
 
                     if (outputWavPath != null)
                     {
-                        speaker.WriteToFile(outputWavPath);   
+                        speaker.WriteToFile(outputWavPath);
                     }
 
                     Console.WriteLine($"Using PvSpeaker version: {speaker.Version}");

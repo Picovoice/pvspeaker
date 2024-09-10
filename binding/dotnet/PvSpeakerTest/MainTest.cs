@@ -9,8 +9,9 @@
     specific language governing permissions and limitations under the License.
 */
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO;
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Pv;
 
@@ -47,22 +48,22 @@ namespace PvSpeakerTest
 
                 string tmpFile = "tmp.wav";
                 speaker.WriteToFile(tmpFile);
-                
+
                 int bytesPerSample = BITS_PER_SAMPLE / 8;
                 int pcmBytesLength = BUFFER_SIZE_SECS * (SAMPLE_RATE * bytesPerSample);
                 byte[] pcmBytes = new byte[pcmBytesLength];
-                
+
                 int writtenLength = speaker.Write(pcmBytes);
                 Assert.IsNotNull(writtenLength);
                 Assert.AreEqual(writtenLength, BUFFER_SIZE_SECS * SAMPLE_RATE);
-                
+
                 int flushedLength = speaker.Flush();
                 Assert.IsNotNull(flushedLength);
                 Assert.AreEqual(flushedLength, 0);
-                
+
                 speaker.Stop();
                 Assert.IsFalse(speaker.IsStarted);
-                
+
                 Assert.IsTrue(File.Exists(tmpFile));
                 File.Delete(tmpFile);
             }
@@ -74,23 +75,23 @@ namespace PvSpeakerTest
             using (PvSpeaker speaker = PvSpeaker.Create(SAMPLE_RATE, BITS_PER_SAMPLE, BUFFER_SIZE_SECS, deviceIndex: 0))
             {
                 speaker.Start();
-        
+
                 int bytesPerSample = BITS_PER_SAMPLE / 8;
                 int pcmBytesLength = (BUFFER_SIZE_SECS + 1) * (SAMPLE_RATE * bytesPerSample);
                 byte[] pcmBytes = new byte[pcmBytesLength];
-                
+
                 int writtenLength = speaker.Write(pcmBytes);
                 Assert.IsNotNull(writtenLength);
                 Assert.AreEqual(writtenLength, BUFFER_SIZE_SECS * SAMPLE_RATE);
-                
+
                 int flushedLength = speaker.Flush(pcmBytes);
                 Assert.IsNotNull(flushedLength);
                 Assert.AreEqual(flushedLength, pcmBytesLength / bytesPerSample);
-                
+
                 speaker.Stop();
             }
         }
-        
+
         [TestMethod]
         public void TestGetAudioDevices()
         {

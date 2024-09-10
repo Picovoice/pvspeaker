@@ -117,5 +117,7 @@ PvSpeaker speaker = PvSpeaker.Create(
 
 ## Demo
 
+<!-- markdown-link-check-disable -->
 The [PvSpeaker .NET demo](https://github.com/Picovoice/pvspeaker/tree/main/demo/dotnet) is a .NET command-line application that demonstrates how to
 use PvSpeaker to play audio from a WAV file.
+<!-- markdown-link-check-enable -->

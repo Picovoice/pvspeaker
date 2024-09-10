@@ -73,7 +73,7 @@ namespace Pv
 
         [DllImport(LIBRARY, CallingConvention = CallingConvention.Cdecl)]
         private static extern PvSpeakerStatus pv_speaker_init(int sampleRate, int bitsPerSample, int bufferSizeSecs, int deviceIndex, out IntPtr handle);
-        
+
         [DllImport(LIBRARY, CallingConvention = CallingConvention.Cdecl)]
         private static extern void pv_speaker_delete(IntPtr handle);
 
@@ -161,7 +161,7 @@ namespace Pv
             {
                 throw new PvSpeakerInvalidArgumentException($"Buffer size (in seconds) of {bufferSizeSecs} is invalid - must be greater than 0.");
             }
-            
+
             if (deviceIndex < -1)
             {
                 throw new PvSpeakerInvalidArgumentException($"Device index of {deviceIndex} is invalid - must be greater than -1.");
@@ -224,7 +224,7 @@ namespace Pv
             }
             return writtenLength;
         }
-        
+
         /// <summary>
         /// Synchronous call to write PCM data to the internal circular buffer for audio playback.
         /// This call blocks the thread until all PCM data has been successfully written and played.
@@ -237,7 +237,7 @@ namespace Pv
             pcm = pcm ?? Array.Empty<byte>();
             GCHandle pinnedArray = GCHandle.Alloc(pcm, GCHandleType.Pinned);
             IntPtr pcmPtr = pinnedArray.AddrOfPinnedObject();
-            
+
             PvSpeakerStatus status = pv_speaker_flush(_libraryPointer, pcmPtr, pcm.Length / (BitsPerSample / 8), out int writtenLength);
             pinnedArray.Free();
             if (status != PvSpeakerStatus.SUCCESS)
@@ -257,11 +257,11 @@ namespace Pv
             {
                 throw new PvSpeakerInvalidArgumentException("Output file path was empty");
             }
-            
+
             byte[] utf8Bytes = Encoding.UTF8.GetBytes(outputPath + '\0');
             IntPtr outputPathPtr = Marshal.AllocHGlobal(utf8Bytes.Length);
             Marshal.Copy(utf8Bytes, 0, outputPathPtr, utf8Bytes.Length);
-            
+
             pv_speaker_write_to_file(_libraryPointer, outputPathPtr);
         }
 
@@ -291,7 +291,7 @@ namespace Pv
         {
             get; private set;
         }
-        
+
         /// <summary>
         /// Gets the buffer size in seconds matching the value passed to the constructor.
         /// </summary>
@@ -380,7 +380,7 @@ namespace Pv
                 AppContext.BaseDirectory,
                 RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "scripts/platform.bat" : "scripts/platform.sh"
             );
-            
+
             var process = new Process();
             var processStartInfo = new ProcessStartInfo()
             {
