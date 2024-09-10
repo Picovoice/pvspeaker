@@ -129,7 +129,7 @@ namespace PvSpeakerDemo
             " --audio_device_index: Index of output audio device.\n" +
             " --input_wav_path: Path to PCM WAV file to be played.\n" +
             " --buffer_size_secs: Size of internal PCM buffer in seconds.\n" +
-            " --output_wav_path: Path to the output WAV file where the PCM data passed to PvSpeaker will be written..\n";
+            " --output_wav_path: Path to the output WAV file where the PCM data passed to PvSpeaker will be written.\n";
 
         static void Main(string[] args)
         {

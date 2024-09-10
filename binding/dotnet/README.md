@@ -64,9 +64,9 @@ public static byte[] GetNextAudioFrame() { }
 int writtenLength = speaker.Write(GetNextAudioFrame());
 ```
 
-Note: the `Write()` method only writes as much PCM data as the internal circular buffer can currently fit, and returns the length of the PCM data that was successfully written.
+Note: the `Write()` method only writes as much PCM data as the internal circular buffer can currently fit, and returns the number of samples that were successfully written.
 
-When all frames have been written, run `Write()` to wait for all buffered PCM data (i.e. previously buffered via `Write()`) to be played:
+When all frames have been written, run `Flush()` to wait for all buffered PCM data (i.e. previously buffered via `Write()`) to be played:
 
 ```csharp
 int flushedLength = speaker.Flush();

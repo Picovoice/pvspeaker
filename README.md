@@ -20,10 +20,12 @@ PvSpeaker is an easy-to-use, cross-platform audio player designed for real-time 
     - [Source Code](#source-code)
     - [Demos](#demos)
       - [Python](#python-demo)
+      - [.NET](#net-demo)
       - [Node.js](#nodejs-demo)
       - [C](#c-demo)
     - [SDKs](#sdks)
       - [Python](#python)
+      - [.NET](#net)
       - [Node.js](#nodejs)
 
 ## Source Code
@@ -68,6 +70,24 @@ pv_speaker_demo --input_wav_path {INPUT_WAV_PATH}
 Replace `{INPUT_WAV_PATH}` with the path to the PCM WAV file you wish to play.
 
 For more information about the Python demos go to [demo/python](demo/python).
+
+### .NET Demo
+
+From [demo/dotnet/PvSpeakerDemo](demo/dotnet/PvSpeakerDemo) run the
+following in the terminal to build the demo:
+
+```console
+dotnet build
+```
+
+Make sure there is a working speaker connected to your device. From [demo/dotnet/PvSpeakerDemo](demo/dotnet/PvSpeakerDemo) run the
+following in the terminal:
+
+```console
+dotnet run -- --input_wav_path ${INPUT_WAV_FILE}
+```
+
+For more information about the .NET demo, go to [demo/dotnet](demo/dotnet).
 
 ### Node.js Demo
 
@@ -178,6 +198,66 @@ speaker.delete()
 ```
 
 For more information about the PvSpeaker Python SDK, go to [binding/python](binding/python).
+
+### .NET
+
+Install the .NET SDK using NuGet or the dotnet CLI:
+
+```console
+dotnet add package PvSpeaker
+```
+
+## Usage
+
+Initialize and start `PvSpeaker`:
+
+```csharp
+using Pv;
+
+PvSpeaker speaker = PvSpeaker.Create(
+    sampleRate: 22050,
+    bitsPerSample: 16);
+
+speaker.Start();
+```
+
+Write PCM data to the speaker:
+
+```csharp
+public static byte[] GetNextAudioFrame() { }
+
+int writtenLength = speaker.Write(GetNextAudioFrame());
+```
+
+Note: the `Write()` method only writes as much PCM data as the internal circular buffer can currently fit, and returns the number of samples that were successfully written.
+
+When all frames have been written, run `Flush()` to wait for all buffered PCM data (i.e. previously buffered via `Write()`) to be played:
+
+```csharp
+int flushedLength = speaker.Flush();
+```
+
+Note: calling `Flush()` with PCM data as an argument will both write that PCM data and wait for all buffered PCM data to finish.
+
+```csharp
+public static byte[] GetRemainingAudioFrames() { }
+
+int flushedLength = speaker.Flush(GetRemainingAudioFrames());
+```
+
+To stop the audio output device, run `Stop()`:
+
+```csharp
+speaker.Stop();
+```
+
+Once you are done, free the resources acquired by PvSpeaker. You do not have to call `Stop()` before `Dispose()`:
+
+```csharp
+speaker.Dispose();
+```
+
+For more information about the PvSpeaker .NET SDK, go to [binding/dotnet](binding/dotnet).
 
 ### Node.js
 

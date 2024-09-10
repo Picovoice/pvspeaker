@@ -207,10 +207,10 @@ namespace Pv
         /// <summary>
         /// Synchronous call to write PCM data to the internal circular buffer for audio playback.
         /// Only writes as much PCM data as the internal circular buffer can currently fit, and returns
-        /// the length of the PCM data that was successfully written. Call between `Start()` and `Stop()`.
+        /// the number of samples that were successfully written. Call between `Start()` and `Stop()`.
         /// </summary>
         /// <param name="pcm">PCM data to be played.</param>
-        /// <returns>Length of the PCM data that was successfully written.</returns>
+        /// <returns>Number of samples that were successfully written.</returns>
         public int Write(byte[] pcm)
         {
             GCHandle pinnedArray = GCHandle.Alloc(pcm, GCHandleType.Pinned);
@@ -231,7 +231,7 @@ namespace Pv
         /// Call between `Start()` and `Stop()`.
         /// </summary>
         /// <param name="pcm">PCM data to be played.</param>
-        /// <returns>Length of the PCM data that was successfully written.</returns>
+        /// <returns>Number of samples that were successfully written.</returns>
         public int Flush(byte[] pcm = null)
         {
             pcm = pcm ?? Array.Empty<byte>();
