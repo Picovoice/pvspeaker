@@ -27,7 +27,7 @@ namespace PvSpeakerTest
         [TestMethod]
         public void TestInit()
         {
-            PvSpeaker speaker = PvSpeaker.Create(SAMPLE_RATE, BITS_PER_SAMPLE, BUFFER_SIZE_SECS, deviceIndex: -1);
+            PvSpeaker speaker = PvSpeaker.Create(SAMPLE_RATE, BITS_PER_SAMPLE, BUFFER_SIZE_SECS, deviceIndex: 0);
             Assert.IsNotNull(speaker);
             Assert.IsTrue(speaker.SampleRate == SAMPLE_RATE);
             Assert.IsTrue(speaker.BitsPerSample == BITS_PER_SAMPLE);
@@ -40,7 +40,7 @@ namespace PvSpeakerTest
         [TestMethod]
         public void TestStartStop()
         {
-            using (PvSpeaker speaker = PvSpeaker.Create(SAMPLE_RATE, BITS_PER_SAMPLE, BUFFER_SIZE_SECS, deviceIndex: -1))
+            using (PvSpeaker speaker = PvSpeaker.Create(SAMPLE_RATE, BITS_PER_SAMPLE, BUFFER_SIZE_SECS, deviceIndex: 0))
             {
                 Assert.IsFalse(speaker.IsStarted);
                 speaker.Start();
@@ -72,7 +72,7 @@ namespace PvSpeakerTest
         [TestMethod]
         public void TestWriteFlush()
         {
-            using (PvSpeaker speaker = PvSpeaker.Create(SAMPLE_RATE, BITS_PER_SAMPLE, BUFFER_SIZE_SECS, deviceIndex: -1))
+            using (PvSpeaker speaker = PvSpeaker.Create(SAMPLE_RATE, BITS_PER_SAMPLE, BUFFER_SIZE_SECS, deviceIndex: 0))
             {
                 speaker.Start();
 
