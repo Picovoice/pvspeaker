@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>net6.0;netcoreapp3.0;netstandard2.0</TargetFrameworks>
+        <TargetFrameworks>net8.0;net6.0;netcoreapp3.0;netstandard2.0</TargetFrameworks>
         <Version>1.0.0</Version>
         <Authors>Picovoice</Authors>
         <Company />
@@ -30,6 +30,7 @@
             <PackagePath>
                 build/netcoreapp3.0/PvSpeaker.targets;
                 build/net6.0/PvSpeaker.targets;
+                build/net8.0/PvSpeaker.targets;
             </PackagePath>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
@@ -42,6 +43,7 @@
                 build/netstandard2.0/libpv_speaker.dll;
                 build/netcoreapp3.0/lib/windows/amd64/libpv_speaker.dll;
                 build/net6.0/lib/windows/amd64/libpv_speaker.dll;
+                build/net8.0/lib/windows/amd64/libpv_speaker.dll;
             </PackagePath>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Link>lib\windows\amd64\libpv_speaker.dll</Link>
@@ -52,6 +54,7 @@
                 build/netstandard2.0/libpv_speaker.so;
                 build/netcoreapp3.0/lib/linux/x86_64/libpv_speaker.so;
                 build/net6.0/lib/linux/x86_64/libpv_speaker.so;
+                build/net8.0/lib/linux/x86_64/libpv_speaker.so;
             </PackagePath>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Link>lib\linux\x86_64\libpv_speaker.so</Link>
@@ -62,6 +65,7 @@
                 build/netstandard2.0/libpv_speaker.dylib;
                 build/netcoreapp3.0/lib/mac/x86_64/libpv_speaker.dylib;
                 build/net6.0/lib/mac/x86_64/libpv_speaker.dylib;
+                build/net8.0/lib/mac/x86_64/libpv_speaker.dylib;
             </PackagePath>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Link>lib\mac\x86_64\libpv_speaker.dylib</Link>
@@ -75,6 +79,7 @@
             <PackagePath>
                 build/netcoreapp3.0/lib/raspberry-pi;
                 build/net6.0/lib/raspberry-pi;
+                build/net8.0/lib/raspberry-pi;
             </PackagePath>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Link>lib\raspberry-pi\%(RecursiveDir)%(Filename)%(Extension)</Link>
@@ -87,6 +92,7 @@
         <Content Include="..\..\..\lib\mac\arm64\libpv_speaker.dylib">
             <PackagePath>
                 build/net6.0/lib/mac/arm64/libpv_speaker.dylib;
+                build/net8.0/lib/mac/arm64/libpv_speaker.dylib;
             </PackagePath>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Link>lib\mac\arm64\libpv_speaker.dylib</Link>
@@ -101,6 +107,7 @@
                 build/netstandard2.0/scripts;
                 build/netcoreapp3.0/scripts;
                 build/net6.0/scripts;
+                build/net8.0/scripts;
             </PackagePath>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Link>scripts\%(Filename)%(Extension)</Link>

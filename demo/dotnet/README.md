@@ -8,7 +8,7 @@ PvSpeaker is an easy-to-use, cross-platform audio player designed for real-time 
 
 ## Requirements
 
-- .NET 6.0
+- .NET 8.0
 
 ## Compatibility
 

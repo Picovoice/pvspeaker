@@ -234,7 +234,7 @@ namespace Pv
         /// <returns>Length of the PCM data that was successfully written.</returns>
         public int Flush(byte[] pcm = null)
         {
-            pcm ??= new byte[0];
+            pcm = pcm ?? Array.Empty<byte>();
             GCHandle pinnedArray = GCHandle.Alloc(pcm, GCHandleType.Pinned);
             IntPtr pcmPtr = pinnedArray.AddrOfPinnedObject();
             
@@ -376,16 +376,11 @@ namespace Pv
         /// <returns>A string representing the absolute path of the library.</returns>
         private static string GetLibraryPath()
         {
-            string scriptPath;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                scriptPath = Path.Combine(AppContext.BaseDirectory, "scripts/platform.bat");
-            }
-            else
-            {
-                scriptPath = Path.Combine(AppContext.BaseDirectory, "scripts/platform.sh");
-            }
-
+            string scriptPath = Path.Combine(
+                AppContext.BaseDirectory,
+                RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "scripts/platform.bat" : "scripts/platform.sh"
+            );
+            
             var process = new Process();
             var processStartInfo = new ProcessStartInfo()
             {
