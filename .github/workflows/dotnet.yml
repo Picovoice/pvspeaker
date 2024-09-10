@@ -32,7 +32,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, macos-13]
+        os: [ubuntu-latest, macos-latest, macos-13, windows-latest]
         dotnet-version: [2.1.x, 3.0.x, 3.1.x, 5.0.x, 6.0.x, 8.0.x]
         include:
           - dotnet-version: 2.1.x
@@ -62,7 +62,7 @@ jobs:
             dotnet-version: 3.1.x
           - os: macos-latest
             dotnet-version: 5.0.x
-          - os: macos-13
+          - os: macos-latest
             dotnet-version: 6.0.x
           - os: macos-13
             dotnet-version: 8.0.x
@@ -86,7 +86,7 @@ jobs:
 
     strategy:
       matrix:
-        machine: [rpi3-32, rpi3-64, rpi4-32, rpi4-64, rpi5-32, rpi5-64, pv-windows]
+        machine: [rpi3-32, rpi3-64, rpi4-32, rpi4-64, rpi5-32, rpi5-64]
 
     steps:
     - uses: actions/checkout@v3
