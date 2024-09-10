@@ -200,7 +200,11 @@ namespace PvSpeakerDemo
             {
                 WavFileInfo wavInfo = GetWavFileInfo(inputWavPath);
 
-                using (PvSpeaker speaker = PvSpeaker.Create(wavInfo.SampleRate, wavInfo.BitsPerSample))
+                using (PvSpeaker speaker = PvSpeaker.Create(
+                        sampleRate: wavInfo.SampleRate,
+                        bitsPerSample: wavInfo.BitsPerSample,
+                        bufferSizeSecs: bufferSizeSecs,
+                        deviceIndex: audioDeviceIndex))
                 {
                     Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
                     {
