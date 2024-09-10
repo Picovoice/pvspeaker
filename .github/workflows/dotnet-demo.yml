@@ -42,6 +42,15 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
+      # ************** REMOVE AFTER RELEASE ********************
+    - name: Pack .NET SDK
+      run: dotnet pack -c Release
+      working-directory: binding/dotnet
+
+    - name: Add local NuGet package file
+      run: dotnet add package -s ../../../binding/dotnet/PvSpeaker/bin/Release PvSpeaker
+      # ********************************************************
+
     - name: Build .NET demo
       run: dotnet build
 
@@ -60,6 +69,15 @@ jobs:
 
     - name: Build .NET demo
       run: dotnet build
+
+      # ************** REMOVE AFTER RELEASE ********************
+    - name: Pack .NET SDK
+      run: dotnet pack -c Release
+      working-directory: binding/dotnet
+
+    - name: Add local NuGet package file
+      run: dotnet add package -s ../../../binding/dotnet/PvSpeaker/bin/Release PvSpeaker
+      # ********************************************************
 
     - name: Run .NET demo
       run: dotnet run -- --show_audio_devices
