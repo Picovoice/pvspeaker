@@ -1,8 +1,9 @@
 # PvSpeaker
 
 <!-- markdown-link-check-disable -->
-[![PyPI](https://img.shields.io/pypi/v/pvspeaker)](https://pypi.org/project/pvspeaker/)
 [![npm](https://img.shields.io/npm/v/@picovoice/pvspeaker-node?label=npm%20%5Bnode%5D)](https://www.npmjs.com/package/@picovoice/pvspeaker-node)
+[![Nuget](https://img.shields.io/nuget/v/pvspeaker)](https://www.nuget.org/packages/PvSpeaker/)
+[![PyPI](https://img.shields.io/pypi/v/pvspeaker)](https://pypi.org/project/pvspeaker/)
 <!-- markdown-link-check-enable -->
 
 Made in Vancouver, Canada by [Picovoice](https://picovoice.ai)

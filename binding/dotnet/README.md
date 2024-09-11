@@ -33,10 +33,8 @@ Platform compatible with .NET 6.0+:
 
 ## Installation
 
-<!-- markdown-link-check-disable -->
 You can install the latest version of PvSpeaker by adding the latest [PvSpeaker Nuget package](https://www.nuget.org/packages/PvSpeaker/)
 in Visual Studio or using by using the .NET CLI:
-<!-- markdown-link-check-enable -->
 
 ```console
 dotnet add package PvSpeaker
@@ -117,7 +115,5 @@ var speaker = new PvSpeaker(
 
 ## Demo
 
-<!-- markdown-link-check-disable -->
-The [PvSpeaker .NET demo](https://github.com/Picovoice/pvspeaker/tree/main/demo/dotnet) is a .NET command-line application that demonstrates how to
+The [PvSpeaker .NET demo](/demo/dotnet) is a .NET command-line application that demonstrates how to
 use PvSpeaker to play audio from a WAV file.
-<!-- markdown-link-check-enable -->
