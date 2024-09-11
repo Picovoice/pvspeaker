@@ -45,9 +45,7 @@ jobs:
 
       # ************** REMOVE AFTER RELEASE ********************
     - name: Pack .NET SDK
-      run: |
-        dotnet build
-        dotnet pack -c Release
+      run: dotnet pack -c Release
       working-directory: binding/dotnet
 
     - name: Add local NuGet package file
@@ -72,13 +70,13 @@ jobs:
 
       # ************** REMOVE AFTER RELEASE ********************
     - name: Pack .NET SDK
-      run: |
-        dotnet build
-        dotnet pack -c Release
+      run: dotnet pack -c Release
       working-directory: binding/dotnet
 
     - name: Add local NuGet package file
-      run: dotnet add package -s ../../../binding/dotnet/PvSpeaker/bin/Release PvSpeaker
+      run: |
+        dotnet nuget locals all --clear
+        dotnet add package -s ../../../binding/dotnet/PvSpeaker/bin/Release PvSpeaker
       # ********************************************************
 
     - name: Build .NET demo
