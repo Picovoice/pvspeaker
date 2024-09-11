@@ -45,7 +45,9 @@ jobs:
 
       # ************** REMOVE AFTER RELEASE ********************
     - name: Pack .NET SDK
-      run: dotnet pack -c Release
+      run: |
+        dotnet build
+        dotnet pack -c Release
       working-directory: binding/dotnet
 
     - name: Add local NuGet package file
@@ -70,7 +72,9 @@ jobs:
 
       # ************** REMOVE AFTER RELEASE ********************
     - name: Pack .NET SDK
-      run: dotnet pack -c Release
+      run: |
+        dotnet build
+        dotnet pack -c Release
       working-directory: binding/dotnet
 
     - name: Add local NuGet package file
