@@ -238,7 +238,7 @@ namespace PvSpeakerDemo
 
                     int bytesPerSample = wavInfo.BitsPerSample / 8;
                     List<byte[]> pcmList = SplitArray(wavInfo.AudioData, wavInfo.SampleRate * bytesPerSample);
-                    
+
                     Console.WriteLine($"Playing {inputWavPath}...");
                     foreach (byte[] pcmSublist in pcmList)
                     {
