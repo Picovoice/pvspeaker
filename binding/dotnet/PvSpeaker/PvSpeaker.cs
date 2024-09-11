@@ -236,7 +236,7 @@ namespace Pv
         public int Flush(byte[] pcm = null)
         {
             pcm = pcm ?? Array.Empty<byte>();
-            
+
             // Create a pointer to the byte array to pass to `pv_speaker_flush`.
             GCHandle pinnedArray = GCHandle.Alloc(pcm, GCHandleType.Pinned);
             IntPtr pcmPtr = pinnedArray.AddrOfPinnedObject();
