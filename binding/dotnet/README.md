@@ -49,7 +49,7 @@ Initialize and start `PvSpeaker`:
 ```csharp
 using Pv;
 
-PvSpeaker speaker = PvSpeaker.Create(
+var speaker = new PvSpeaker(
     sampleRate: 22050,
     bitsPerSample: 16);
 
@@ -95,7 +95,7 @@ speaker.Dispose();
 To have resources freed immediately after use without explicitly calling the `Dispose()` function, wrap `PvSpeaker` in a `using` statement:
 
 ```csharp
-using (PvSpeaker speaker = PvSpeaker.Create(sampleRate: 22050, bitsPerSample: 16)) {
+using (var speaker = new PvSpeaker(sampleRate: 22050, bitsPerSample: 16)) {
     // PvSpeaker usage
 }
 ```
@@ -109,7 +109,7 @@ string[] devices = PvSpeaker.GetAudioDevices();
 
 The index of the device in the returned list can be used in `Create()` to select that device for audio playback:
 ```csharp
-PvSpeaker speaker = PvSpeaker.Create(
+var speaker = new PvSpeaker(
     sampleRate: 22050,
     bitsPerSample: 16,
     deviceIndex: 2);

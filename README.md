@@ -214,7 +214,7 @@ Initialize and start `PvSpeaker`:
 ```csharp
 using Pv;
 
-PvSpeaker speaker = PvSpeaker.Create(
+var speaker = new PvSpeaker(
     sampleRate: 22050,
     bitsPerSample: 16);
 
