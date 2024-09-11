@@ -58,12 +58,12 @@ namespace PvSpeakerDemo
         {
             if (string.IsNullOrEmpty(filePath))
             {
-                throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
+                throw new ArgumentException("File path cannot be null or empty.");
             }
 
             if (!File.Exists(filePath))
             {
-                throw new FileNotFoundException("The specified file was not found.", filePath);
+                throw new FileNotFoundException("The specified file was not found.");
             }
 
             using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
@@ -145,6 +145,7 @@ namespace PvSpeakerDemo
             string inputWavPath = null;
             int bufferSizeSecs = 20;
             string outputWavPath = null;
+            bool showHelp = false;
 
             int argIndex = 0;
             while (argIndex < args.Length)
@@ -184,10 +185,23 @@ namespace PvSpeakerDemo
                         outputWavPath = args[argIndex++];
                     }
                 }
+                else if (args[argIndex] == "-h" || args[argIndex] == "--help")
+                {
+                    showHelp = true;
+                    argIndex++;
+                }
                 else
                 {
                     argIndex++;
                 }
+            }
+
+            // print help text and exit
+            if (showHelp)
+            {
+                Console.WriteLine(HELP_STR);
+                Console.Read();
+                return;
             }
 
             if (showAudioDevices)
@@ -224,6 +238,8 @@ namespace PvSpeakerDemo
 
                     int bytesPerSample = wavInfo.BitsPerSample / 8;
                     List<byte[]> pcmList = SplitArray(wavInfo.AudioData, wavInfo.SampleRate * bytesPerSample);
+                    
+                    Console.WriteLine($"Playing {inputWavPath}...");
                     foreach (byte[] pcmSublist in pcmList)
                     {
                         int totalWrittenLength = 0;

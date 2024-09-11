@@ -170,7 +170,7 @@ namespace Pv
             PvSpeakerStatus status = pv_speaker_init(sampleRate, bitsPerSample, bufferSizeSecs, deviceIndex, out _libraryPointer);
             if (status != PvSpeakerStatus.SUCCESS)
             {
-                throw PvSpeakerStatusToException(status);
+                throw PvSpeakerStatusToException(status, "Failed to initialize PvSpeaker.");
             }
 
             SampleRate = sampleRate;
@@ -188,7 +188,7 @@ namespace Pv
             PvSpeakerStatus status = pv_speaker_start(_libraryPointer);
             if (status != PvSpeakerStatus.SUCCESS)
             {
-                throw PvSpeakerStatusToException(status);
+                throw PvSpeakerStatusToException(status, "Failed to start PvSpeaker.");
             }
         }
 
@@ -200,7 +200,7 @@ namespace Pv
             PvSpeakerStatus status = pv_speaker_stop(_libraryPointer);
             if (status != PvSpeakerStatus.SUCCESS)
             {
-                throw PvSpeakerStatusToException(status);
+                throw PvSpeakerStatusToException(status, "Failed to stop PvSpeaker.");
             }
         }
 
@@ -213,6 +213,7 @@ namespace Pv
         /// <returns>Number of samples that were successfully written.</returns>
         public int Write(byte[] pcm)
         {
+            // Create a pointer to the byte array to pass to `pv_speaker_write` .
             GCHandle pinnedArray = GCHandle.Alloc(pcm, GCHandleType.Pinned);
             IntPtr pcmPtr = pinnedArray.AddrOfPinnedObject();
 
@@ -220,7 +221,7 @@ namespace Pv
             pinnedArray.Free();
             if (status != PvSpeakerStatus.SUCCESS)
             {
-                throw PvSpeakerStatusToException(status);
+                throw PvSpeakerStatusToException(status, "Failed to write to PvSpeaker.");
             }
             return writtenLength;
         }
@@ -235,6 +236,8 @@ namespace Pv
         public int Flush(byte[] pcm = null)
         {
             pcm = pcm ?? Array.Empty<byte>();
+            
+            // Create a pointer to the byte array to pass to `pv_speaker_flush`.
             GCHandle pinnedArray = GCHandle.Alloc(pcm, GCHandleType.Pinned);
             IntPtr pcmPtr = pinnedArray.AddrOfPinnedObject();
 
@@ -242,7 +245,7 @@ namespace Pv
             pinnedArray.Free();
             if (status != PvSpeakerStatus.SUCCESS)
             {
-                throw PvSpeakerStatusToException(status);
+                throw PvSpeakerStatusToException(status, "Failed to flush PCM data from PvSpeaker.");
             }
             return writtenLength;
         }
@@ -255,14 +258,18 @@ namespace Pv
         {
             if (String.IsNullOrEmpty(outputPath))
             {
-                throw new PvSpeakerInvalidArgumentException("Output file path was empty");
+                throw new PvSpeakerInvalidArgumentException("Output file path was empty.");
             }
 
             byte[] utf8Bytes = Encoding.UTF8.GetBytes(outputPath + '\0');
             IntPtr outputPathPtr = Marshal.AllocHGlobal(utf8Bytes.Length);
             Marshal.Copy(utf8Bytes, 0, outputPathPtr, utf8Bytes.Length);
 
-            pv_speaker_write_to_file(_libraryPointer, outputPathPtr);
+            PvSpeakerStatus status = pv_speaker_write_to_file(_libraryPointer, outputPathPtr);
+            if (status != PvSpeakerStatus.SUCCESS)
+            {
+                throw PvSpeakerStatusToException(status, "Failed to write to output file.");
+            }
         }
 
         /// <summary>
@@ -325,7 +332,7 @@ namespace Pv
             PvSpeakerStatus status = pv_speaker_get_available_devices(out int deviceListLength, out IntPtr deviceList);
             if (status != PvSpeakerStatus.SUCCESS)
             {
-                throw PvSpeakerStatusToException(status);
+                throw PvSpeakerStatusToException(status, "Failed to get available output devices.");
             }
 
             int elementSize = Marshal.SizeOf(typeof(IntPtr));
@@ -345,26 +352,26 @@ namespace Pv
         /// </summary>
         /// <param name="status">Status code.</param>
         /// <returns>PvSpeakerExceptions</returns>
-        private static PvSpeakerException PvSpeakerStatusToException(PvSpeakerStatus status)
+        private static PvSpeakerException PvSpeakerStatusToException(PvSpeakerStatus status, string message = "")
         {
             switch (status)
             {
                 case PvSpeakerStatus.OUT_OF_MEMORY:
-                    return new PvSpeakerMemoryException();
+                    return new PvSpeakerMemoryException(message);
                 case PvSpeakerStatus.INVALID_ARGUMENT:
-                    return new PvSpeakerInvalidArgumentException();
+                    return new PvSpeakerInvalidArgumentException(message);
                 case PvSpeakerStatus.INVALID_STATE:
-                    return new PvSpeakerInvalidStateException("PvSpeaker failed with invalid state.");
+                    return new PvSpeakerInvalidStateException(message ?? "PvSpeaker failed with invalid state.");
                 case PvSpeakerStatus.BACKEND_ERROR:
-                    return new PvSpeakerBackendException("PvSpeaker audio backend error.");
+                    return new PvSpeakerBackendException(message ?? "PvSpeaker audio backend error.");
                 case PvSpeakerStatus.DEVICE_ALREADY_INITIALIZED:
-                    return new PvSpeakerDeviceAlreadyInitializedException("PvSpeaker audio device already initialized.");
+                    return new PvSpeakerDeviceAlreadyInitializedException(message ?? "PvSpeaker audio device already initialized.");
                 case PvSpeakerStatus.DEVICE_NOT_INITIALIZED:
-                    return new PvSpeakerDeviceNotInitializedException("PvSpeaker audio device not initialized.");
+                    return new PvSpeakerDeviceNotInitializedException(message ?? "PvSpeaker audio device not initialized.");
                 case PvSpeakerStatus.IO_ERROR:
-                    return new PvSpeakerIOException();
+                    return new PvSpeakerIOException(message);
                 case PvSpeakerStatus.RUNTIME_ERROR:
-                    return new PvSpeakerRuntimeException("PvSpeaker runtime error.");
+                    return new PvSpeakerRuntimeException(message ?? "PvSpeaker runtime error.");
                 default:
                     return new PvSpeakerException("Unknown status returned from PvSpeaker.");
             }
