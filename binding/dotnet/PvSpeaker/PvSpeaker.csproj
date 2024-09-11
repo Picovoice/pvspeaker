@@ -1,0 +1,126 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net8.0;net6.0;netcoreapp3.0;netstandard2.0</TargetFrameworks>
+        <Version>1.0.0</Version>
+        <Authors>Picovoice</Authors>
+        <Company />
+        <Product>PvSpeaker</Product>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/Picovoice/pvspeaker</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/Picovoice/pvspeaker.git</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>audio, audio player, audio playback, audio speaker, speech audio processing, real-time processing</PackageTags>
+        <PackageReleaseNotes>See https://github.com/Picovoice/pvspeaker/ </PackageReleaseNotes>
+        <Copyright>Picovoice 2024</Copyright>
+        <Description>PvSpeaker is a cross-platform audio player for .NET designed for real-time speech audio playback.</Description>
+        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+        <PackageIcon>pv_circle_512.png</PackageIcon>
+    </PropertyGroup>
+
+    <!--Target files-->
+    <ItemGroup>
+        <Content Include="PvSpeaker.netstandard2.0.targets">
+            <PackagePath>
+                build/netstandard2.0/PvSpeaker.targets;
+            </PackagePath>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="PvSpeaker.targets">
+            <PackagePath>
+                build/netcoreapp3.0/PvSpeaker.targets;
+                build/net6.0/PvSpeaker.targets;
+                build/net8.0/PvSpeaker.targets;
+            </PackagePath>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <!--.NET Standard 2.0+ libs-->
+    <ItemGroup>
+        <Content Include="..\..\..\lib\windows\amd64\libpv_speaker.dll">
+            <PackagePath>
+                build/netstandard2.0/libpv_speaker.dll;
+                build/netcoreapp3.0/lib/windows/amd64/libpv_speaker.dll;
+                build/net6.0/lib/windows/amd64/libpv_speaker.dll;
+                build/net8.0/lib/windows/amd64/libpv_speaker.dll;
+            </PackagePath>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>lib\windows\amd64\libpv_speaker.dll</Link>
+            <Visible>false</Visible>
+        </Content>
+        <Content Include="..\..\..\lib\linux\x86_64\libpv_speaker.so">
+            <PackagePath>
+                build/netstandard2.0/libpv_speaker.so;
+                build/netcoreapp3.0/lib/linux/x86_64/libpv_speaker.so;
+                build/net6.0/lib/linux/x86_64/libpv_speaker.so;
+                build/net8.0/lib/linux/x86_64/libpv_speaker.so;
+            </PackagePath>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>lib\linux\x86_64\libpv_speaker.so</Link>
+            <Visible>false</Visible>
+        </Content>
+        <Content Include="..\..\..\lib\mac\x86_64\libpv_speaker.dylib">
+            <PackagePath>
+                build/netstandard2.0/libpv_speaker.dylib;
+                build/netcoreapp3.0/lib/mac/x86_64/libpv_speaker.dylib;
+                build/net6.0/lib/mac/x86_64/libpv_speaker.dylib;
+                build/net8.0/lib/mac/x86_64/libpv_speaker.dylib;
+            </PackagePath>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>lib\mac\x86_64\libpv_speaker.dylib</Link>
+            <Visible>false</Visible>
+        </Content>
+    </ItemGroup>
+
+    <!--.NET Core 3.0+ libs-->
+    <ItemGroup>
+        <Content Include="..\..\..\lib\raspberry-pi\**\*" Exclude="..\..\..\lib\raspberry-pi\arm11\*">
+            <PackagePath>
+                build/netcoreapp3.0/lib/raspberry-pi;
+                build/net6.0/lib/raspberry-pi;
+                build/net8.0/lib/raspberry-pi;
+            </PackagePath>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>lib\raspberry-pi\%(RecursiveDir)%(Filename)%(Extension)</Link>
+            <Visible>false</Visible>
+        </Content>
+    </ItemGroup>
+
+    <!--.NET 6.0+ libs-->
+    <ItemGroup>
+        <Content Include="..\..\..\lib\mac\arm64\libpv_speaker.dylib">
+            <PackagePath>
+                build/net6.0/lib/mac/arm64/libpv_speaker.dylib;
+                build/net8.0/lib/mac/arm64/libpv_speaker.dylib;
+            </PackagePath>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>lib\mac\arm64\libpv_speaker.dylib</Link>
+            <Visible>false</Visible>
+        </Content>
+    </ItemGroup>
+
+    <!--Resource files-->
+    <ItemGroup>
+        <Content Include="..\..\..\resources\scripts\*">
+            <PackagePath>
+                build/netstandard2.0/scripts;
+                build/netcoreapp3.0/scripts;
+                build/net6.0/scripts;
+                build/net8.0/scripts;
+            </PackagePath>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>scripts\%(Filename)%(Extension)</Link>
+            <Visible>False</Visible>
+        </Content>
+    </ItemGroup>
+    <ItemGroup>
+        <Folder Include="Content\" />
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="Content\pv_circle_512.png">
+            <Pack>True</Pack>
+            <PackagePath></PackagePath>
+        </None>
+    </ItemGroup>
+</Project>

@@ -1,0 +1,8 @@
+.vs
+PvSpeaker/bin/**
+PvSpeaker/obj/**
+PvSpeaker/Properties/**
+PvSpeakerTest/bin/**
+PvSpeakerTest/obj/**
+PvSpeakerTest/Properties/**
+*.user

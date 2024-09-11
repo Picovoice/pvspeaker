@@ -30,6 +30,7 @@ malloc
 miniaudio
 napi
 NETCOREAPP
+netstandard
 Picovoice
 pthread
 pvspeaker
