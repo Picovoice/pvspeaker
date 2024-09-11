@@ -214,7 +214,7 @@ namespace PvSpeakerDemo
             {
                 WavFileInfo wavInfo = GetWavFileInfo(inputWavPath);
 
-                using (PvSpeaker speaker = PvSpeaker.Create(
+                using (var speaker = new PvSpeaker(
                         sampleRate: wavInfo.SampleRate,
                         bitsPerSample: wavInfo.BitsPerSample,
                         bufferSizeSecs: bufferSizeSecs,

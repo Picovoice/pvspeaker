@@ -108,28 +108,6 @@ namespace Pv
         private static extern IntPtr pv_speaker_version();
 
         /// <summary>
-        /// Factory method for creating instances of PvSpeaker.
-        /// </summary>
-        /// <param name="sampleRate">
-        /// The sample rate of the audio to be played.
-        /// </param>
-        /// <param name="bitsPerSample">
-        /// The number of bits per sample of the audio to be played.
-        /// </param>
-        /// <param name="bufferSizeSecs">
-        /// The size in seconds of the internal buffer used to buffer PCM data
-        /// - i.e. internal circular buffer will be of size `sampleRate` * `bufferSizeSecs`.
-        /// </param>
-        /// <param name="deviceIndex">
-        /// The index of the audio device to play audio from. A value of (-1) will use the default audio device.
-        /// </param>
-        /// <returns>An instance of PvSpeaker.</returns>
-        public static PvSpeaker Create(int sampleRate, int bitsPerSample, int bufferSizeSecs = 20, int deviceIndex = -1)
-        {
-            return new PvSpeaker(sampleRate, bitsPerSample, bufferSizeSecs, deviceIndex);
-        }
-
-        /// <summary>
         /// Constructor for PvSpeaker.
         /// </summary>
         /// <param name="sampleRate">
@@ -145,7 +123,7 @@ namespace Pv
         /// <param name="deviceIndex">
         /// The index of the audio device to play audio from. A value of (-1) will use the default audio device.
         /// </param>
-        private PvSpeaker(int sampleRate, int bitsPerSample, int bufferSizeSecs, int deviceIndex)
+        public PvSpeaker(int sampleRate, int bitsPerSample, int bufferSizeSecs = 20, int deviceIndex = -1)
         {
             if (sampleRate <= 0)
             {
@@ -213,7 +191,6 @@ namespace Pv
         /// <returns>Number of samples that were successfully written.</returns>
         public int Write(byte[] pcm)
         {
-            // Create a pointer to the byte array to pass to `pv_speaker_write` .
             GCHandle pinnedArray = GCHandle.Alloc(pcm, GCHandleType.Pinned);
             IntPtr pcmPtr = pinnedArray.AddrOfPinnedObject();
 
@@ -236,8 +213,6 @@ namespace Pv
         public int Flush(byte[] pcm = null)
         {
             pcm = pcm ?? Array.Empty<byte>();
-
-            // Create a pointer to the byte array to pass to `pv_speaker_flush`.
             GCHandle pinnedArray = GCHandle.Alloc(pcm, GCHandleType.Pinned);
             IntPtr pcmPtr = pinnedArray.AddrOfPinnedObject();
 
