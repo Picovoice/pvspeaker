@@ -13,16 +13,18 @@
 import { execSync } from "child_process";
 import * as os from "os";
 import * as path from "path";
+import * as fs from "fs";
 
 import PvSpeakerStatus from "./pv_speaker_status_t";
 import pvSpeakerStatusToException from "./errors";
+import { getSystemLibraryPath } from './platforms';
 
 /**
  * PvSpeaker class for playing audio.
  */
 class PvSpeaker {
   // eslint-disable-next-line
-  private static _pvSpeaker = require(PvSpeaker._getLibraryPath());
+  private static _pvSpeaker = require(getSystemLibraryPath());
 
   private readonly _handle: number;
   private readonly _sampleRate: number;
@@ -197,20 +199,6 @@ class PvSpeaker {
       throw new Error("Failed to get audio devices.");
     }
     return devices;
-  }
-
-  private static _getLibraryPath(): string {
-    let scriptPath;
-    if (os.platform() === "win32") {
-      scriptPath = path.resolve(__dirname, "..", "scripts", "platform.bat");
-    } else {
-      scriptPath = path.resolve(__dirname, "..", "scripts", "platform.sh");
-    }
-
-    const output = execSync(`"${scriptPath}"`).toString();
-    const [osName, cpu] = output.split(" ");
-
-    return path.resolve(__dirname, "..", "lib", osName, cpu, "pv_speaker.node");
   }
 }
 

@@ -62,7 +62,7 @@ namespace Pv
 #pragma warning disable IDE0059
 
             IntPtr libHandle = IntPtr.Zero;
-            NativeLibrary.TryLoad(GetLibraryPath(), out libHandle);
+            NativeLibrary.TryLoad(Utils.PvLibraryPath(libraryName), out libHandle);
             return libHandle;
         }
 
@@ -350,55 +350,6 @@ namespace Pv
                 default:
                     return new PvSpeakerException("Unknown status returned from PvSpeaker.");
             }
-        }
-
-        /// <summary>
-        /// Helper function to get the library path of pv_speaker.
-        /// </summary>
-        /// <returns>A string representing the absolute path of the library.</returns>
-        private static string GetLibraryPath()
-        {
-            string scriptPath = Path.Combine(
-                AppContext.BaseDirectory,
-                RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "scripts/platform.bat" : "scripts/platform.sh"
-            );
-
-            var process = new Process();
-            var processStartInfo = new ProcessStartInfo()
-            {
-                FileName = scriptPath,
-                UseShellExecute = false,
-                RedirectStandardOutput = true
-            };
-            process.StartInfo = processStartInfo;
-            process.Start();
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
-            {
-                throw new SystemException("System is not supported.");
-            }
-
-            string[] output = process.StandardOutput.ReadToEnd().Split(' ');
-            string osName = output[0];
-            string cpu = output[1];
-
-            string libName;
-
-            if (osName == "windows")
-            {
-                libName = $"{LIBRARY}.dll";
-            }
-            else if (osName == "mac")
-            {
-                libName = $"{LIBRARY}.dylib";
-            }
-            else
-            {
-                libName = $"{LIBRARY}.so";
-            }
-
-            return Path.Combine(AppContext.BaseDirectory, $"lib/{osName}/{cpu}/{libName}");
         }
 
         /// <summary>
