@@ -29,6 +29,7 @@ _RASPBERRY_PI_MACHINES = {
     "cortex-a76-aarch64",
 }
 
+
 def _linux_machine() -> str:
     machine = platform.machine()
     if machine == "x86_64":
@@ -54,6 +55,7 @@ def _linux_machine() -> str:
         return "cortex-a76" + arch_info
     else:
         raise NotImplementedError("Unsupported CPU: `%s`." % cpu_part)
+
 
 def default_library_path(relative: str = ''):
     """A helper function to get the library path."""

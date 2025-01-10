@@ -67,6 +67,7 @@ jobs:
             pv_speaker_platform: raspberry-pi5-64
           - machine: pv-windows-arm64
             pv_speaker_platform: windows-arm64
+            shell: pwsh
 
     steps:
       - uses: actions/checkout@v3

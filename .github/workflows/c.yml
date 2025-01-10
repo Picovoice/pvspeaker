@@ -180,10 +180,8 @@ jobs:
         with:
           name: windows
           path: |
-            lib/windows/amd64/libpv_speaker.*
-            lib/windows/arm64/libpv_speaker.*
-            lib/node/windows/amd64/pv_speaker.node
-            lib/node/windows/arm64/pv_speaker.node
+            lib/${{ inputs.output_dir }}/libpv_speaker.*
+            lib/node/${{ inputs.output_dir }}/pv_speaker.node
           retention-days: 3
 
   collect-artifacts:
