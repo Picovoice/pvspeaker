@@ -182,6 +182,7 @@ jobs:
           path: |
             lib/windows/amd64/libpv_speaker.*
             lib/node/windows/amd64/pv_speaker.node
+            lib/node/windows/arm64/pv_speaker.node
           retention-days: 3
 
   collect-artifacts:
