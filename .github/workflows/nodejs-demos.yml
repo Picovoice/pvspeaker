@@ -64,9 +64,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Pre-build dependencies
-        run: npm install yarn
-
       # ************ REMOVE AFTER RELEASE ***************
       - name: build local binding
         run: |

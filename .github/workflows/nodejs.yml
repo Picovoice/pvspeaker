@@ -72,9 +72,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Pre-build dependencies
-        run: npm install yarn
-
       - name: Install dependencies
         run: yarn install
 
