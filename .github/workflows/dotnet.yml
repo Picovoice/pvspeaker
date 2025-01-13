@@ -31,8 +31,9 @@ jobs:
   build-github-hosted:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, macos-13, windows-latest]
         dotnet-version: [2.1.x, 3.0.x, 3.1.x, 5.0.x, 6.0.x, 8.0.x]
         include:
           - dotnet-version: 2.1.x
@@ -73,7 +74,7 @@ jobs:
 
     strategy:
       matrix:
-        machine: [rpi3-32, rpi3-64, rpi4-32, rpi4-64, rpi5-32, rpi5-64, pv-windows, pv-ios, pv-windows-arm64]
+        machine: [rpi3-32, rpi3-64, rpi4-32, rpi4-64, rpi5-32, rpi5-64, pv-windows-arm64]
 
     steps:
     - uses: actions/checkout@v3
