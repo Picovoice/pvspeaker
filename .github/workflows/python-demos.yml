@@ -58,7 +58,7 @@ jobs:
 
     strategy:
       matrix:
-        machine: [rpi3-32, rpi3-64, rpi4-32, rpi4-64, rpi5-32, rpi5-64]
+        machine: [rpi3-32, rpi3-64, rpi4-32, rpi4-64, rpi5-32, rpi5-64, pv-windows-arm64]
 
     steps:
     - uses: actions/checkout@v3
@@ -70,35 +70,12 @@ jobs:
       working-directory: binding/python
     # ************ REMOVE AFTER RELEASE ***************
 
-    - name: Install dependencies
+    - name: Setup Python virtualenv (*nix)
+      if: ${{ matrix.machine != 'pv-windows-arm64' }}
       run: |
         python3 -m venv .venv
         source .venv/bin/activate
-        pip3 install -r requirements.txt
-
-    - name: Run demo
-      run: |
-        python3 -m venv .venv
-        source .venv/bin/activate
-        python3 pv_speaker_demo.py --show_audio_devices
-
-  build-windows-arm64:
-    runs-on: ${{ matrix.machine }}
-
-    strategy:
-      matrix:
-        machine: [pv-windows-arm64]
-
-    steps:
-    - uses: actions/checkout@v3
-
-    # ************ REMOVE AFTER RELEASE ***************
-    - name: build local binding
-      run: |
-        python3 -m pip install setuptools wheel
-        python3 -m setup sdist bdist_wheel
-      working-directory: binding/python
-    # ************ REMOVE AFTER RELEASE ***************
+        echo PATH=$PATH >> $GITHUB_ENV
 
     - name: Install dependencies
       run: pip3 install -r requirements.txt

@@ -1,5 +1,5 @@
 ﻿/*
-    Copyright 2024 Picovoice Inc.
+    Copyright 2024-2025 Picovoice Inc.
 
     You may not use this file except in compliance with the license. A copy of the license is located in the "LICENSE"
     file accompanying this source.
@@ -41,6 +41,7 @@ namespace Pv
     {
         private const string LIBRARY = "libpv_speaker";
         private IntPtr _libraryPointer = IntPtr.Zero;
+        private static const string _libraryPath = Utils.PvLibraryPath(libraryName);
 
         static PvSpeaker()
         {
@@ -62,7 +63,7 @@ namespace Pv
 #pragma warning disable IDE0059
 
             IntPtr libHandle = IntPtr.Zero;
-            NativeLibrary.TryLoad(Utils.PvLibraryPath(libraryName), out libHandle);
+            NativeLibrary.TryLoad(_libraryPath, out libHandle);
             return libHandle;
         }
 

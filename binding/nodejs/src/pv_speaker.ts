@@ -1,5 +1,5 @@
 //
-// Copyright 2024 Picovoice Inc.
+// Copyright 2024-2025 Picovoice Inc.
 //
 // You may not use this file except in compliance with the license. A copy of the license is located in the "LICENSE"
 // file accompanying this source.
@@ -9,11 +9,6 @@
 // specific language governing permissions and limitations under the License.
 //
 "use strict";
-
-import { execSync } from "child_process";
-import * as os from "os";
-import * as path from "path";
-import * as fs from "fs";
 
 import PvSpeakerStatus from "./pv_speaker_status_t";
 import pvSpeakerStatusToException from "./errors";

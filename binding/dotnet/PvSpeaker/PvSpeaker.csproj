@@ -51,7 +51,6 @@
         </Content>
         <Content Include="..\..\..\lib\windows\arm64\libpv_speaker.dll">
             <PackagePath>
-                build/netcoreapp3.0/lib/windows/arm64/libpv_speaker.dll;
                 build/net6.0/lib/windows/arm64/libpv_speaker.dll;
                 build/net8.0/lib/windows/arm64/libpv_speaker.dll;
             </PackagePath>
