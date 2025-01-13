@@ -41,7 +41,6 @@ namespace Pv
     {
         private const string LIBRARY = "libpv_speaker";
         private IntPtr _libraryPointer = IntPtr.Zero;
-        private static const string _libraryPath = Utils.PvLibraryPath(libraryName);
 
         static PvSpeaker()
         {
@@ -63,7 +62,7 @@ namespace Pv
 #pragma warning disable IDE0059
 
             IntPtr libHandle = IntPtr.Zero;
-            NativeLibrary.TryLoad(_libraryPath, out libHandle);
+            NativeLibrary.TryLoad(Utils.PvLibraryPath(libraryName), out libHandle);
             return libHandle;
         }
 
