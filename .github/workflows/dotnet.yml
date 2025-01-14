@@ -60,10 +60,10 @@ jobs:
             test-framework: net5.0
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ matrix.dotnet-version }}
 
@@ -77,9 +77,10 @@ jobs:
     runs-on: ${{ matrix.machine }}
 
     strategy:
+      fail-fast: false
       matrix:
         machine: [rpi3-32, rpi3-64, rpi4-32, rpi4-64, rpi5-32, rpi5-64, pv-windows, pv-ios, pv-windows-arm64]
-        dotnet-version: [8.0.x]
+        dotnet-version: [6.0.x, 8.0.x]
         include:
           - dotnet-version: 6.0.x
             binding-framework: net6.0
@@ -105,7 +106,7 @@ jobs:
             test-framework: net5.0
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Build binding
       run: dotnet build PvSpeaker/PvSpeaker.csproj --framework ${{ matrix.binding-framework }}
