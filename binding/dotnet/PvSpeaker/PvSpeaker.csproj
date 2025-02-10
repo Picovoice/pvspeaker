@@ -22,15 +22,15 @@
     <ItemGroup>
         <Content Include="PvSpeaker.netstandard2.0.targets">
             <PackagePath>
-                build/netstandard2.0/PvSpeaker.targets;
+                buildTransitive/netstandard2.0/PvSpeaker.targets;
             </PackagePath>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <Content Include="PvSpeaker.targets">
             <PackagePath>
-                build/netcoreapp3.0/PvSpeaker.targets;
-                build/net6.0/PvSpeaker.targets;
-                build/net8.0/PvSpeaker.targets;
+                buildTransitive/netcoreapp3.0/PvSpeaker.targets;
+                buildTransitive/net6.0/PvSpeaker.targets;
+                buildTransitive/net8.0/PvSpeaker.targets;
             </PackagePath>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
@@ -40,10 +40,10 @@
     <ItemGroup>
         <Content Include="..\..\..\lib\windows\amd64\libpv_speaker.dll">
             <PackagePath>
-                build/netstandard2.0/libpv_speaker.dll;
-                build/netcoreapp3.0/lib/windows/amd64/libpv_speaker.dll;
-                build/net6.0/lib/windows/amd64/libpv_speaker.dll;
-                build/net8.0/lib/windows/amd64/libpv_speaker.dll;
+                buildTransitive/netstandard2.0/libpv_speaker.dll;
+                buildTransitive/netcoreapp3.0/lib/windows/amd64/libpv_speaker.dll;
+                buildTransitive/net6.0/lib/windows/amd64/libpv_speaker.dll;
+                buildTransitive/net8.0/lib/windows/amd64/libpv_speaker.dll;
             </PackagePath>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Link>lib\windows\amd64\libpv_speaker.dll</Link>
@@ -51,10 +51,10 @@
         </Content>
         <Content Include="..\..\..\lib\mac\x86_64\libpv_speaker.dylib">
             <PackagePath>
-                build/netstandard2.0/libpv_speaker.dylib;
-                build/netcoreapp3.0/lib/mac/x86_64/libpv_speaker.dylib;
-                build/net6.0/lib/mac/x86_64/libpv_speaker.dylib;
-                build/net8.0/lib/mac/x86_64/libpv_speaker.dylib;
+                buildTransitive/netstandard2.0/libpv_speaker.dylib;
+                buildTransitive/netcoreapp3.0/lib/mac/x86_64/libpv_speaker.dylib;
+                buildTransitive/net6.0/lib/mac/x86_64/libpv_speaker.dylib;
+                buildTransitive/net8.0/lib/mac/x86_64/libpv_speaker.dylib;
             </PackagePath>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Link>lib\mac\x86_64\libpv_speaker.dylib</Link>
@@ -66,8 +66,8 @@
     <ItemGroup>
         <Content Include="..\..\..\lib\linux\x86_64\libpv_speaker.so">
             <PackagePath>
-                build/net6.0/lib/linux/x86_64/libpv_speaker.so;
-                build/net8.0/lib/linux/x86_64/libpv_speaker.so;
+                buildTransitive/net6.0/lib/linux/x86_64/libpv_speaker.so;
+                buildTransitive/net8.0/lib/linux/x86_64/libpv_speaker.so;
             </PackagePath>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Link>lib\linux\x86_64\libpv_speaker.so</Link>
@@ -75,8 +75,8 @@
         </Content>
         <Content Include="..\..\..\lib\mac\arm64\libpv_speaker.dylib">
             <PackagePath>
-                build/net6.0/lib/mac/arm64/libpv_speaker.dylib;
-                build/net8.0/lib/mac/arm64/libpv_speaker.dylib;
+                buildTransitive/net6.0/lib/mac/arm64/libpv_speaker.dylib;
+                buildTransitive/net8.0/lib/mac/arm64/libpv_speaker.dylib;
             </PackagePath>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Link>lib\mac\arm64\libpv_speaker.dylib</Link>
@@ -84,8 +84,8 @@
         </Content>
         <Content Include="..\..\..\lib\windows\arm64\libpv_speaker.dll">
             <PackagePath>
-                build/net6.0/lib/windows/arm64/libpv_speaker.dll;
-                build/net8.0/lib/windows/arm64/libpv_speaker.dll;
+                buildTransitive/net6.0/lib/windows/arm64/libpv_speaker.dll;
+                buildTransitive/net8.0/lib/windows/arm64/libpv_speaker.dll;
             </PackagePath>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Link>lib\windows\arm64\libpv_speaker.dll</Link>
@@ -93,8 +93,8 @@
         </Content>
         <Content Include="..\..\..\lib\raspberry-pi\**\*" Exclude="..\..\..\lib\raspberry-pi\arm11\*">
             <PackagePath>
-                build/net6.0/lib/raspberry-pi;
-                build/net8.0/lib/raspberry-pi;
+                buildTransitive/net6.0/lib/raspberry-pi;
+                buildTransitive/net8.0/lib/raspberry-pi;
             </PackagePath>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <Link>lib\raspberry-pi\%(RecursiveDir)%(Filename)%(Extension)</Link>
