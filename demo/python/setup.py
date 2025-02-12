@@ -32,6 +32,9 @@ with open(os.path.join(os.path.dirname(__file__), 'MANIFEST.in'), 'w') as f:
 with open(os.path.join(os.path.dirname(__file__), 'README.md'), 'r') as f:
     long_description = f.read()
 
+with open(os.path.join(os.path.dirname(__file__), "requirements.txt"), "r") as f:
+    dependencies = f.read().strip().splitlines()
+
 setuptools.setup(
     name="pvspeakerdemo",
     version="1.0.4",
@@ -42,7 +45,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/Picovoice/pvspeaker",
     packages=["pvspeakerdemo"],
-    install_requires=["pvspeaker==1.0.4"],
+    install_requires=dependencies,
     include_package_data=True,
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -57,6 +60,6 @@ setuptools.setup(
             'pv_speaker_demo=pvspeakerdemo.pv_speaker_demo:main',
         ],
     ),
-    python_requires='>=3.8',
+    python_requires='>=3.9',
     keywords="Audio Player",
 )
