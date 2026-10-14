@@ -63,7 +63,7 @@ jobs:
 
     strategy:
       matrix:
-        machine: [rpi3-32, rpi3-64, rpi4-32, rpi4-64, rpi5-32, rpi5-64, pv-windows, pv-ios, pv-windows-arm64]
+        machine: [rpi3-64, rpi4-64, rpi5-64, pv-windows, pv-ios, pv-windows-arm64]
 
     steps:
     - uses: actions/checkout@v3
@@ -71,11 +71,8 @@ jobs:
         submodules: recursive
 
     - name: Install PulseAudio
-      if: matrix.machine == 'rpi3-32' ||
-          matrix.machine == 'rpi3-64' ||
-          matrix.machine == 'rpi4-32' ||
+      if: matrix.machine == 'rpi3-64' ||
           matrix.machine == 'rpi4-64' ||
-          matrix.machine == 'rpi5-32' ||
           matrix.machine == 'rpi5-64'
       run: |
         sudo apt-get update
