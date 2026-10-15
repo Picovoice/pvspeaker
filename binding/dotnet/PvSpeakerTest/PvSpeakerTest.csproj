@@ -29,5 +29,10 @@
             <Link>libpv_speaker.dylib</Link>
             <Visible>false</Visible>
         </Content>
+        <Content Include="..\..\..\lib\mac\arm64\libpv_speaker.dylib">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Link>libpv_speaker.dylib</Link>
+            <Visible>false</Visible>
+        </Content>
     </ItemGroup>
 </Project>
